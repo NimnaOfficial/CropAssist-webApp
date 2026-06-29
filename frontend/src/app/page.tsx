@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Variants } from "framer-motion";
 import TypewriterText from "@/src/components/TypewriterText";
 import ThreeServicesBg from "@/src/components/ThreeServicesBg";
+import Navbar from "@/src/components/Navbar";
 
 const backgrounds = [
   "https://images.wallpaperscraft.com/image/single/tree_stones_light_1359768_3840x2400.jpg",
@@ -76,6 +77,7 @@ export default function LandingPage() {
 
   return (
     <div className="w-full bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-50 overflow-x-hidden">
+      <Navbar />
 
       {/* ════════════════════ HERO SECTION ════════════════════ */}
       <section id="home" className="relative w-full h-screen overflow-hidden">
@@ -483,6 +485,17 @@ export default function LandingPage() {
         <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-zinc-100 dark:from-zinc-900/50 to-transparent pointer-events-none" />
       </section>
 
+      {/* GLOBAL FOOTER */}
+      <footer className="bg-zinc-100 dark:bg-zinc-900/50 py-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:24px_24px]" />
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-xs font-bold tracking-[0.1em] uppercase text-zinc-500 relative z-10 gap-6">
+          <p>© 2026 Crop Mgr Assist. <span className="text-green-500">All rights reserved.</span></p>
+          <div className="flex gap-8">
+            <Link href="/privacy" className="hover:text-green-500 transition-colors duration-300">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-green-500 transition-colors duration-300">Terms of Service</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
