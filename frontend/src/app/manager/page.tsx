@@ -7,7 +7,7 @@ import {
   Sun, Moon, LogOut, Search, Bell, Users, Sprout,
   ArrowUpRight, ArrowDownRight, User, Leaf, MapPin, Calendar,
   MessageSquare, Send, X, Filter, SortAsc, SortDesc, Eye,
-  Mail, BarChart3, Shield, Check, Plus, Trash2, Tag, CheckCircle
+  Mail, BarChart3, Shield, Check, Plus, Trash2, Tag, CheckCircle, ChevronLeft, ChevronRight, Menu, PanelLeftClose, PanelLeftOpen
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import DashboardBackground from "../../components/DashboardBackground";
@@ -101,6 +101,7 @@ export default function ManagerDashboard() {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [isNavOpen, setIsNavOpen] = useState(true);
   
   // Users state
   const [farmers, setFarmers] = useState<FarmerUser[]>(mockFarmers);
@@ -259,7 +260,7 @@ export default function ManagerDashboard() {
   }, {} as Record<number, number>);
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-hidden">
+    <div className="flex flex-col h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-hidden">
       
       <DashboardBackground />
 
@@ -268,29 +269,41 @@ export default function ManagerDashboard() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
             <Sprout size={20} className="text-green-500" strokeWidth={1.5} />
-            <span className="text-sm text-zinc-900 dark:text-white font-gelasio tracking-wide">Crop Mgr Assist</span>
+            <span className="hidden sm:inline text-sm text-zinc-900 dark:text-white font-gelasio tracking-wide">Crop Mgr Assist</span>
           </Link>
           
-          <nav className="hidden md:flex items-center bg-zinc-100/80 dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-1 ml-6">
-            {navTabs.map(tab => {
-              const Icon = tab.icon;
-              return (
-                <motion.button
-                  key={tab.id}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs transition-all duration-300 ${
-                    activeTab === tab.id
-                      ? "bg-white dark:bg-white/10 text-green-600 dark:text-green-400 shadow-sm dark:shadow-none border border-zinc-200 dark:border-white/10"
-                      : "text-zinc-500 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white/70 border border-transparent"
-                  }`}
-                >
-                  <Icon size={14} strokeWidth={1.5} />
-                  {tab.label}
-                </motion.button>
-              );
-            })}
-          </nav>
+          <div className="hidden md:flex items-center gap-2 ml-6">
+            <button onClick={() => setIsNavOpen(!isNavOpen)} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-green-500 transition-colors">
+              {isNavOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            </button>
+            <nav className="flex items-center bg-zinc-100/80 dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-1 rounded-md overflow-hidden whitespace-nowrap">
+              {navTabs.map(tab => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <motion.button
+                    key={tab.id}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setActiveTab(tab.id)}
+                    animate={{ width: isNavOpen ? "auto" : "40px", paddingLeft: isNavOpen ? "1rem" : "0", paddingRight: isNavOpen ? "1rem" : "0" }}
+                    className={`flex items-center justify-center gap-2 py-2 text-xs transition-colors duration-300 ${
+                      active
+                        ? "bg-white dark:bg-white/10 text-green-600 dark:text-green-400 shadow-sm dark:shadow-none border border-zinc-200 dark:border-white/10 rounded-sm"
+                        : "text-zinc-500 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white/70 border border-transparent"
+                    }`}
+                    title={!isNavOpen ? tab.label : ""}
+                  >
+                    <Icon size={16} strokeWidth={1.5} className="flex-shrink-0" />
+                    {isNavOpen && (
+                      <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        {tab.label}
+                      </motion.span>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </nav>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
@@ -298,37 +311,38 @@ export default function ManagerDashboard() {
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-              className="w-9 h-9 flex items-center justify-center border border-zinc-200 dark:border-white/10 hover:border-green-500/30 text-zinc-500 dark:text-white transition-colors bg-white/50 dark:bg-black/20 backdrop-blur-md"
+              className="w-9 h-9 flex items-center justify-center border border-zinc-200 dark:border-white/10 hover:border-green-500/30 text-zinc-500 dark:text-white transition-colors bg-white/50 dark:bg-black/20 backdrop-blur-md rounded-full"
             >
               {resolvedTheme === "dark" ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
             </motion.button>
           )}
-          <button className="relative w-9 h-9 flex items-center justify-center border border-zinc-200 dark:border-white/10 hover:border-green-500/30 text-zinc-500 dark:text-white transition-colors bg-white/50 dark:bg-black/20 backdrop-blur-md">
+          <button className="relative w-9 h-9 flex items-center justify-center border border-zinc-200 dark:border-white/10 hover:border-green-500/30 text-zinc-500 dark:text-white transition-colors bg-white/50 dark:bg-black/20 backdrop-blur-md rounded-full">
             <Bell size={16} strokeWidth={1.5} />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-zinc-50 dark:border-zinc-950" />
+            <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-zinc-50 dark:border-zinc-950 rounded-full" />
           </button>
-          <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-green-500 flex items-center justify-center text-xs text-white shadow-md">
+          <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-green-500 flex items-center justify-center text-xs text-white shadow-md rounded-full">
             MG
           </div>
           <Link href="/login" className="flex items-center gap-2 text-xs text-red-500 hover:text-red-600 dark:text-red-400/60 dark:hover:text-red-400 transition-colors ml-2">
-            <LogOut size={14} strokeWidth={1.5} />
+            <LogOut size={16} strokeWidth={1.5} />
           </Link>
         </div>
       </header>
 
       {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
-      <main className="flex-1 p-6 md:p-8 relative z-10 overflow-y-auto">
-        
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-gelasio tracking-wide text-zinc-900 dark:text-white">Manager Dashboard</h1>
-            <p className="text-xs text-zinc-500 dark:text-white/40 mt-1 uppercase tracking-widest">Agricultural Enterprise Management</p>
+      <div className="flex-1 overflow-y-auto relative z-10 flex flex-col">
+        <main className="flex-1 p-6 md:p-8 flex flex-col">
+          
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-gelasio tracking-wide text-zinc-900 dark:text-white">Manager Dashboard</h1>
+              <p className="text-xs text-zinc-500 dark:text-white/40 mt-1 uppercase tracking-widest">Agricultural Enterprise Management</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-white/30">
+              <Calendar size={14} strokeWidth={1.5} />
+              <span>Today</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-white/30">
-            <Calendar size={14} strokeWidth={1.5} />
-            <span>Today</span>
-          </div>
-        </div>
 
         <AnimatePresence mode="wait">
 
@@ -625,16 +639,17 @@ export default function ManagerDashboard() {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
+        </main>
 
-      {/* FOOTER */}
-      <footer className="border-t border-zinc-200 dark:border-white/5 px-8 py-6 flex items-center justify-between text-[10px] text-zinc-500 dark:text-white/20 uppercase tracking-widest relative z-10 bg-zinc-50/60 dark:bg-zinc-950/60 backdrop-blur-xl mt-auto">
-        <span>© 2026 Crop Mgr Assist — Manager Portal</span>
-        <div className="flex gap-6">
-          <Link href="/privacy" className="hover:text-zinc-900 dark:hover:text-white/50 transition-colors">Privacy</Link>
-          <Link href="/terms" className="hover:text-zinc-900 dark:hover:text-white/50 transition-colors">Terms</Link>
-        </div>
-      </footer>
+        {/* FOOTER */}
+        <footer className="border-t border-zinc-200 dark:border-white/5 px-8 py-6 flex items-center justify-between text-[10px] text-zinc-500 dark:text-white/20 uppercase tracking-widest relative z-10 bg-zinc-50/60 dark:bg-zinc-950/60 backdrop-blur-xl mt-auto">
+          <span>© 2026 Crop Mgr Assist — Manager Portal</span>
+          <div className="flex gap-6">
+            <Link href="/privacy" className="hover:text-zinc-900 dark:hover:text-white/50 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-zinc-900 dark:hover:text-white/50 transition-colors">Terms</Link>
+          </div>
+        </footer>
+      </div>
 
       {/* ════════ ADD USER MODAL ════════ */}
       <AnimatePresence>

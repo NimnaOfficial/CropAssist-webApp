@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Sprout, User, Search, Sun, Moon, Bell, LogOut,
   Wheat, ArrowUpRight, ArrowDownRight, Leaf, MapPin, Calendar, 
   ChevronRight, MoreHorizontal, Plus, Edit, Trash2, Droplets, Users, BarChart3, Bug,
-  MessageSquare, Send, X, Check
+  MessageSquare, Send, X, Check, PanelLeftClose, PanelLeftOpen
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import DashboardBackground from "../../components/DashboardBackground";
@@ -120,6 +120,7 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState("overview");
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
   
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -210,78 +211,80 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-hidden">
+    <div className="flex h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-hidden">
       
       {/* ═══════════════════ THREE.JS BACKGROUND ═══════════════════ */}
       <DashboardBackground />
 
       {/* ═══════════════════ LEFT SIDEBAR ═══════════════════ */}
-      <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-md border-r border-zinc-200 dark:border-white/5 p-6 justify-between flex-shrink-0 transition-colors duration-500 relative z-10">
-        <div>
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-sm text-white shadow-lg">
-              JF
+      <AnimatePresence initial={false}>
+        <motion.aside 
+          initial={false}
+          animate={{ width: isSidebarOpen ? 256 : 80 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="hidden lg:flex flex-col h-full bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-md border-r border-zinc-200 dark:border-white/5 p-4 justify-between flex-shrink-0 transition-colors duration-500 relative z-10 overflow-hidden whitespace-nowrap"
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex items-center gap-3 mb-10 h-10 px-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-sm text-white shadow-lg flex-shrink-0">
+                JF
+              </div>
+              {isSidebarOpen && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1">
+                  <p className="text-sm font-normal text-zinc-900 dark:text-white">John Farmer</p>
+                  <p className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest">Enterprise</p>
+                </motion.div>
+              )}
             </div>
-            <div>
-              <p className="text-sm font-normal text-zinc-900 dark:text-white">John Farmer</p>
-              <p className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest">Enterprise</p>
+
+            <nav className="flex flex-col gap-2 mb-8 flex-1">
+              {sidebarNavMain.map((item) => {
+                const Icon = item.icon;
+                const active = activeNav === item.id;
+                return (
+                  <motion.button
+                    key={item.id}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setActiveNav(item.id)}
+                    className={`flex items-center gap-3 px-3 py-3 rounded-md text-sm transition-all duration-300 text-left w-full ${
+                      active
+                        ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+                        : "text-zinc-500 dark:text-white/50 hover:text-zinc-900 dark:hover:text-white/80 hover:bg-zinc-100 dark:hover:bg-white/5 border border-transparent"
+                    }`}
+                    title={!isSidebarOpen ? item.label : ""}
+                  >
+                    <Icon size={20} strokeWidth={1.5} className="flex-shrink-0" />
+                    {isSidebarOpen && (
+                      <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </nav>
+
+            <div className="flex flex-col gap-2">
+              <Link
+                href="/login"
+                className="flex items-center gap-3 px-3 py-3 rounded-md text-sm text-red-500 dark:text-red-400/60 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/5 transition-all duration-300 border border-transparent hover:border-red-200 dark:hover:border-red-500/10"
+                title={!isSidebarOpen ? "Logout" : ""}
+              >
+                <LogOut size={20} strokeWidth={1.5} className="flex-shrink-0" />
+                {isSidebarOpen && <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>Logout</motion.span>}
+              </Link>
             </div>
           </div>
-
-          <div
-            className="flex items-center gap-3 bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 mb-10 cursor-pointer hover:border-green-500/30 transition-colors shadow-sm dark:shadow-none"
-            onClick={() => setSearchOpen(!searchOpen)}
-          >
-            <Search size={14} className="text-zinc-500 dark:text-white/40" strokeWidth={1.5} />
-            <span className="text-xs text-zinc-500 dark:text-white/30 flex-1">Search...</span>
-            <span className="text-[10px] text-zinc-400 dark:text-white/20 border border-zinc-300 dark:border-white/10 px-1.5 py-0.5">⌘K</span>
-          </div>
-
-          <p className="text-[10px] text-zinc-400 dark:text-white/30 uppercase tracking-[0.25em] mb-4">Dashboard</p>
-          <nav className="flex flex-col gap-1 mb-8">
-            {sidebarNavMain.map((item) => {
-              const Icon = item.icon;
-              const active = activeNav === item.id;
-              return (
-                <motion.button
-                  key={item.id}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveNav(item.id)}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm transition-all duration-300 text-left w-full ${
-                    active
-                      ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
-                      : "text-zinc-500 dark:text-white/50 hover:text-zinc-900 dark:hover:text-white/80 hover:bg-zinc-100 dark:hover:bg-white/5 border border-transparent"
-                  }`}
-                >
-                  <Icon size={18} strokeWidth={1.5} />
-                  {item.label}
-                </motion.button>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <Link
-            href="/login"
-            className="flex items-center gap-3 px-4 py-3 text-sm text-red-500 dark:text-red-400/60 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/5 transition-all duration-300 border border-transparent hover:border-red-200 dark:hover:border-red-500/10"
-          >
-            <LogOut size={18} strokeWidth={1.5} />
-            Logout
-          </Link>
-          <div className="border-t border-zinc-200 dark:border-white/5 pt-4">
-            <div className="flex items-center gap-2">
-              <Sprout size={16} className="text-green-500" strokeWidth={1.5} />
-              <span className="text-[10px] text-zinc-400 dark:text-white/20 uppercase tracking-widest">Crop Mgr Assist</span>
-            </div>
-          </div>
-        </div>
-      </aside>
+        </motion.aside>
+      </AnimatePresence>
 
       {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
-      <div className="flex-1 flex flex-col h-screen overflow-y-auto relative z-10">
+      <div className="flex-1 flex flex-col h-full overflow-y-auto relative z-10">
         <header className="sticky top-0 z-40 bg-zinc-50/60 dark:bg-zinc-950/60 backdrop-blur-xl border-b border-zinc-200 dark:border-white/5 px-8 py-4 flex items-center justify-between transition-colors duration-500">
           <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-white/40">
+            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="mr-3 text-zinc-400 hover:text-green-500 transition-colors">
+              {isSidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+            </button>
             <Sprout size={14} className="text-green-500" strokeWidth={1.5} />
             <span>Dashboard</span>
             <ChevronRight size={12} />
