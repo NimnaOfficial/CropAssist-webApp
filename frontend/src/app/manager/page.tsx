@@ -260,7 +260,7 @@ export default function ManagerDashboard() {
   }, {} as Record<number, number>);
 
   return (
-    <div className="flex flex-col h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-hidden">
+    <div className="flex flex-col min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-x-hidden">
       
       <DashboardBackground />
 
@@ -330,7 +330,7 @@ export default function ManagerDashboard() {
       </header>
 
       {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
-      <div className="flex-1 overflow-y-auto relative z-10 flex flex-col">
+      <div className="flex-1 relative z-10 flex flex-col w-full max-w-full">
         <main className="flex-1 p-6 md:p-8 flex flex-col">
           
           <div className="flex items-center justify-between mb-8">
@@ -448,11 +448,11 @@ export default function ManagerDashboard() {
                     <div className="flex items-center bg-white/70 dark:bg-white/5 backdrop-blur-md border border-zinc-200 dark:border-white/10 px-3 py-2 gap-2">
                       <Filter size={12} className="text-zinc-500 dark:text-white/40" />
                       <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)} className="bg-transparent text-xs text-zinc-700 dark:text-white outline-none">
-                        <option value="all">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="pending">Pending</option>
-                        <option value="suspended">Suspended</option>
+                        <option value="all" className="bg-white text-black">All Status</option>
+                        <option value="active" className="bg-white text-black">Active</option>
+                        <option value="inactive" className="bg-white text-black">Inactive</option>
+                        <option value="pending" className="bg-white text-black">Pending</option>
+                        <option value="suspended" className="bg-white text-black">Suspended</option>
                       </select>
                     </div>
                   </div>
@@ -517,8 +517,8 @@ export default function ManagerDashboard() {
                 <div className="flex items-center bg-white/70 dark:bg-white/5 backdrop-blur-md border border-zinc-200 dark:border-white/10 px-3 py-2 gap-2">
                   <User size={12} className="text-zinc-500 dark:text-white/40" />
                   <select value={cropUserFilter === "all" ? "all" : String(cropUserFilter)} onChange={e => setCropUserFilter(e.target.value === "all" ? "all" : Number(e.target.value))} className="bg-transparent text-xs text-zinc-700 dark:text-white outline-none">
-                    <option value="all">All Farmers</option>
-                    {farmers.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    <option value="all" className="bg-white text-black">All Farmers</option>
+                    {farmers.map(f => <option key={f.id} value={f.id} className="bg-white text-black">{f.name}</option>)}
                   </select>
                 </div>
               </div>
@@ -587,12 +587,12 @@ export default function ManagerDashboard() {
 
           {/* ════════ MESSAGES TAB ════════ */}
           {activeTab === "messages" && (
-            <motion.div key="messages" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-4" style={{ height: "calc(100vh - 220px)" }}>
-              <div className="w-72 flex-shrink-0 bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 flex flex-col overflow-hidden shadow-sm dark:shadow-none">
+            <motion.div key="messages" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-4">
+              <div className="w-72 flex-shrink-0 bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 flex flex-col shadow-sm dark:shadow-none">
                 <div className="p-4 border-b border-zinc-200 dark:border-white/5">
                   <h3 className="text-sm font-gelasio text-zinc-900 dark:text-white mb-3">Conversations</h3>
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1">
                   {farmers.map(f => (
                     <div key={f.id} onClick={() => setChatFarmer(f)} className={`px-4 py-3 cursor-pointer border-b border-zinc-100 dark:border-white/5 transition-colors ${chatFarmer?.id === f.id ? "bg-green-500/5 dark:bg-green-500/10 border-l-2 border-l-green-500" : "hover:bg-zinc-50 dark:hover:bg-white/[0.02]"}`}>
                       <div className="flex items-center gap-3">
@@ -607,7 +607,7 @@ export default function ManagerDashboard() {
                 </div>
               </div>
 
-              <div className="flex-1 bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 flex flex-col overflow-hidden shadow-sm dark:shadow-none">
+              <div className="flex-1 bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 flex flex-col shadow-sm dark:shadow-none">
                 {chatFarmer ? (
                   <>
                     <div className="px-6 py-4 border-b border-zinc-200 dark:border-white/5 flex items-center justify-between bg-zinc-50/50 dark:bg-white/[0.02]">
@@ -618,7 +618,7 @@ export default function ManagerDashboard() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+                    <div className="p-6 flex flex-col gap-4">
                       {farmerMessages.map(msg => (
                         <div key={msg.id} className={`flex flex-col ${msg.sender === "Manager" ? "items-end" : "items-start"}`}>
                           <span className="text-[9px] text-zinc-400 dark:text-white/30 mb-1">{msg.sender} • {msg.time}</span>
@@ -633,7 +633,7 @@ export default function ManagerDashboard() {
                     </form>
                   </>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center"><p className="text-sm text-zinc-500 dark:text-white/30">Select a farmer to start messaging</p></div>
+                  <div className="p-12 flex items-center justify-center"><p className="text-sm text-zinc-500 dark:text-white/30">Select a farmer to start messaging</p></div>
                 )}
               </div>
             </motion.div>
@@ -655,7 +655,7 @@ export default function ManagerDashboard() {
       <AnimatePresence>
         {isAddUserOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-zinc-900/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 w-full max-w-md shadow-2xl p-8">
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 w-full max-w-md shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-gelasio text-zinc-900 dark:text-white">Add New Farmer</h3>
                 <button onClick={() => setIsAddUserOpen(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><X size={16} /></button>
@@ -710,10 +710,10 @@ export default function ManagerDashboard() {
                         onChange={(e) => updateUserStatus(selectedFarmer.id, e.target.value as any)}
                         className={`text-[10px] px-2 py-0.5 border capitalize outline-none cursor-pointer ${statusColor(selectedFarmer.status)}`}
                       >
-                        <option value="active">Active</option>
-                        <option value="pending">Pending</option>
-                        <option value="suspended">Suspended</option>
-                        <option value="inactive">Inactive</option>
+                        <option value="active" className="bg-white text-black">Active</option>
+                        <option value="pending" className="bg-white text-black">Pending</option>
+                        <option value="suspended" className="bg-white text-black">Suspended</option>
+                        <option value="inactive" className="bg-white text-black">Inactive</option>
                       </select>
                     </div>
                   </div>

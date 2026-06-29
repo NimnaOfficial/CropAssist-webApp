@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import Link from "next/link";
 import {
   LayoutDashboard, Sprout, User, Search, Sun, Moon, Bell, LogOut,
@@ -120,7 +120,8 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState("overview");
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const dragControls = useDragControls();
   
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -128,6 +129,20 @@ export default function DashboardPage() {
   const [activeCrops, setActiveCrops] = useState(initialCrops);
   const [activeNotifications, setActiveNotifications] = useState(initialNotifications);
   
+  const [cropSearchTerm, setCropSearchTerm] = useState("");
+  const [cropSortField, setCropSortField] = useState<"name" | "status" | "health">("name");
+  const [cropSortDir, setCropSortDir] = useState<"asc" | "desc">("asc");
+  
+  const filteredSortedCrops = activeCrops
+    .filter(c => c.name.toLowerCase().includes(cropSearchTerm.toLowerCase()) || c.field.toLowerCase().includes(cropSearchTerm.toLowerCase()))
+    .sort((a, b) => {
+      let cmp = 0;
+      if (cropSortField === "name") cmp = a.name.localeCompare(b.name);
+      else if (cropSortField === "status") cmp = a.status.localeCompare(b.status);
+      else if (cropSortField === "health") cmp = a.health - b.health;
+      return cropSortDir === "asc" ? cmp : -cmp;
+    });
+
   const [isCropModalOpen, setCropModalOpen] = useState(false);
   const [editingCropId, setEditingCropId] = useState<number | null>(null);
   
@@ -211,7 +226,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-hidden">
+    <div className="flex min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-x-hidden">
       
       {/* ═══════════════════ THREE.JS BACKGROUND ═══════════════════ */}
       <DashboardBackground />
@@ -220,9 +235,11 @@ export default function DashboardPage() {
       <AnimatePresence initial={false}>
         <motion.aside 
           initial={false}
+          onMouseEnter={() => setSidebarOpen(true)}
+          onMouseLeave={() => setSidebarOpen(false)}
           animate={{ width: isSidebarOpen ? 256 : 80 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="hidden lg:flex flex-col h-full bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-md border-r border-zinc-200 dark:border-white/5 p-4 justify-between flex-shrink-0 transition-colors duration-500 relative z-10 overflow-hidden whitespace-nowrap"
+          className="hidden lg:flex flex-col h-screen sticky top-0 bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-md border-r border-zinc-200 dark:border-white/5 p-4 justify-between flex-shrink-0 transition-colors duration-500 relative z-20 overflow-hidden whitespace-nowrap shadow-xl"
         >
           <div className="flex flex-col h-full">
             <div className="flex items-center gap-3 mb-10 h-10 px-2">
@@ -279,12 +296,9 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
-      <div className="flex-1 flex flex-col h-full overflow-y-auto relative z-10">
+      <div className="flex-1 relative z-10 flex flex-col w-full max-w-full">
         <header className="sticky top-0 z-40 bg-zinc-50/60 dark:bg-zinc-950/60 backdrop-blur-xl border-b border-zinc-200 dark:border-white/5 px-8 py-4 flex items-center justify-between transition-colors duration-500">
           <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-white/40">
-            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="mr-3 text-zinc-400 hover:text-green-500 transition-colors">
-              {isSidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
-            </button>
             <Sprout size={14} className="text-green-500" strokeWidth={1.5} />
             <span>Dashboard</span>
             <ChevronRight size={12} />
@@ -317,7 +331,7 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        <main className="flex-1 p-8 flex gap-8">
+        <main className="p-8 flex gap-8 min-h-max">
           <div className="flex-1 flex flex-col gap-8 pb-24">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-normal font-gelasio tracking-wide capitalize text-zinc-900 dark:text-white">{activeNav}</h1>
@@ -436,8 +450,27 @@ export default function DashboardPage() {
                     </motion.button>
                   </div>
 
+                  <div className="flex flex-col gap-4 mb-2 mt-4">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex-1 min-w-[200px] max-w-md flex items-center bg-white/70 dark:bg-white/5 backdrop-blur-md border border-zinc-200 dark:border-white/10 px-4 py-2.5 gap-3">
+                        <Search size={14} className="text-zinc-500 dark:text-white/40" />
+                        <input type="text" value={cropSearchTerm} onChange={e => setCropSearchTerm(e.target.value)} placeholder="Search crops or fields..." className="flex-1 bg-transparent outline-none text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-white/30" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <select value={cropSortField} onChange={e => setCropSortField(e.target.value as any)} className="bg-white/70 dark:bg-white/5 text-xs text-zinc-700 dark:text-white outline-none border border-zinc-200 dark:border-white/10 px-3 py-2.5">
+                          <option value="name" className="bg-white text-black">Sort by Name</option>
+                          <option value="status" className="bg-white text-black">Sort by Status</option>
+                          <option value="health" className="bg-white text-black">Sort by Health</option>
+                        </select>
+                        <button onClick={() => setCropSortDir(d => d === "asc" ? "desc" : "asc")} className="bg-white/70 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-3 py-2.5 text-zinc-700 dark:text-white flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors">
+                          {cropSortDir === "asc" ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {activeCrops.map((crop, i) => (
+                    {filteredSortedCrops.map((crop, i) => (
                       <motion.div key={crop.id} custom={i} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-6 hover:border-green-500/30 transition-all duration-300 group shadow-sm dark:shadow-none">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
@@ -573,11 +606,15 @@ export default function DashboardPage() {
       <AnimatePresence>
         {chatOpen && (
           <motion.div 
+            drag
+            dragControls={dragControls}
+            dragListener={false}
+            dragMomentum={false}
             initial={{ opacity: 0, y: 20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-6 right-6 w-80 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 shadow-2xl z-50 flex flex-col overflow-hidden rounded-t-xl"
+            className="fixed bottom-6 right-6 w-80 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 shadow-2xl z-50 flex flex-col overflow-hidden rounded-xl"
             style={{ height: '400px' }}
           >
-            <div className="bg-zinc-100 dark:bg-white/5 border-b border-zinc-200 dark:border-white/10 p-4 flex items-center justify-between">
+            <div onPointerDown={(e) => dragControls.start(e)} className="bg-zinc-100 dark:bg-white/5 border-b border-zinc-200 dark:border-white/10 p-4 flex items-center justify-between cursor-grab active:cursor-grabbing">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-green-500/20 flex items-center justify-center rounded-full text-green-600 dark:text-green-400"><User size={14} /></div>
                 <div>
@@ -629,7 +666,7 @@ export default function DashboardPage() {
           >
             <motion.div 
               initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 p-8 w-full max-w-md shadow-2xl"
+              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 p-8 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <h3 className="text-xl font-gelasio mb-6 text-zinc-900 dark:text-white">{editingCropId ? "Edit Crop" : "Add New Crop"}</h3>
               <form onSubmit={handleSaveCrop} className="flex flex-col gap-4">
@@ -653,10 +690,10 @@ export default function DashboardPage() {
                   <div>
                     <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1 block">Status</label>
                     <select required value={cropForm.status} onChange={(e) => setCropForm({...cropForm, status: e.target.value})} className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors">
-                      <option value="Seedling">Seedling</option>
-                      <option value="Growing">Growing</option>
-                      <option value="Mature">Mature</option>
-                      <option value="Harvesting">Harvesting</option>
+                      <option value="Seedling" className="bg-white text-black">Seedling</option>
+                      <option value="Growing" className="bg-white text-black">Growing</option>
+                      <option value="Mature" className="bg-white text-black">Mature</option>
+                      <option value="Harvesting" className="bg-white text-black">Harvesting</option>
                     </select>
                   </div>
                   <div>
