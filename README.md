@@ -3,3 +3,4 @@
 ### Accessed membs: add name 👇🏻
 
 * **huwin**
+* **Vidura**
