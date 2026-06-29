@@ -5,6 +5,8 @@ import { Sprout, ArrowRight, ArrowLeft, Leaf, BarChart3, ShieldCheck, Mail, Chec
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Variants } from "framer-motion";
+import TypewriterText from "@/src/components/TypewriterText";
+import ThreeServicesBg from "@/src/components/ThreeServicesBg";
 
 const backgrounds = [
   "https://images.wallpaperscraft.com/image/single/tree_stones_light_1359768_3840x2400.jpg",
@@ -12,7 +14,7 @@ const backgrounds = [
   "https://images7.alphacoders.com/118/thumb-1920-1184570.jpg"
 ];
 
-/* Agriculture-themed background for Services section */
+/* Deep green/golden backdrop for services base */
 const servicesBg = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80";
 
 export default function LandingPage() {
@@ -95,7 +97,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-black/30 dark:bg-black/50 z-[1]" />
 
         {/* LEFT ULTRA GLASSMORPHISM OVERLAY */}
-        <div className="absolute top-0 left-0 w-full lg:w-[55%] h-full backdrop-blur-[80px] bg-white/40 dark:bg-zinc-950/50 z-10" />
+        <div className="absolute top-0 left-0 w-full lg:w-[55%] h-full backdrop-blur-[80px] bg-white/40 dark:bg-zinc-950/60 z-10" />
 
         {/* HERO CONTENT */}
         <div className="absolute inset-0 z-30 flex flex-col justify-center pointer-events-none">
@@ -116,10 +118,10 @@ export default function LandingPage() {
                 initial={{ width: 0 }}
                 animate={{ width: 48 }}
                 transition={{ duration: 0.8, delay: 1.2 }}
-                className="h-[1px] bg-green-500"
+                className="h-[1px] bg-gradient-to-r from-yellow-400 to-green-500"
               />
               <p className="text-zinc-800 dark:text-white/90 text-xs font-bold tracking-[0.4em] uppercase animate-text-reveal">
-                Amazing <span className="text-green-600 dark:text-green-400">Enterprise</span>
+                Amazing <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-yellow-500">Enterprise</span>
               </p>
             </motion.div>
 
@@ -159,17 +161,20 @@ export default function LandingPage() {
               transition={{ duration: 1, delay: 1.2 }}
               className="w-full lg:w-[40%] mt-14 ml-1 pointer-events-auto"
             >
-              <p
-                className="text-zinc-700 dark:text-zinc-200 text-lg italic leading-relaxed mb-10 max-w-md border-l-2 border-green-500 pl-6 font-serif-elegant"
-              >
-                &ldquo;There is a moment in the life of any aspiring agriculturist that it is time to scale their enterprise with the right tools.&rdquo;
-              </p>
+              <div className="border-l-2 border-green-500 pl-6 max-w-md mb-10 h-[100px]">
+                <TypewriterText 
+                  text="“There is a moment in the life of any aspiring agriculturist that it is time to scale their enterprise with the right tools.”" 
+                  className="text-zinc-700 dark:text-zinc-200 text-lg italic leading-relaxed font-serif-elegant" 
+                  delay={1.5}
+                />
+              </div>
+              
               <motion.div initial="rest" whileHover="hover" animate="rest" className="inline-block">
                 <Link
                   href="#about"
-                  className="group relative overflow-hidden inline-flex items-center gap-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs uppercase tracking-[0.2em] px-10 py-5 hover:bg-green-600 dark:hover:bg-green-500 transition-all duration-500 shadow-2xl"
+                  className="group relative overflow-hidden inline-flex items-center gap-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs uppercase tracking-[0.2em] px-10 py-5 hover:bg-green-600 dark:hover:bg-gradient-to-r dark:hover:from-yellow-400 dark:hover:to-green-500 transition-all duration-500 shadow-2xl"
                 >
-                  <span className="relative z-10 flex items-center gap-4">
+                  <span className="relative z-10 flex items-center gap-4 group-hover:text-white transition-colors duration-300">
                     Explore
                     <motion.span variants={arrowVariants}>
                       <ArrowRight size={16} />
@@ -188,10 +193,10 @@ export default function LandingPage() {
             <motion.div
               key={idx}
               animate={{
-                backgroundColor: currentBg === idx ? "rgba(34, 197, 94, 1)" : "rgba(255, 255, 255, 0.3)",
+                backgroundColor: currentBg === idx ? "rgba(234, 179, 8, 1)" : "rgba(255, 255, 255, 0.3)",
                 scale: currentBg === idx ? 1.5 : 1
               }}
-              className="w-2 h-2 rotate-45 cursor-pointer"
+              className="w-2 h-2 rotate-45 cursor-pointer shadow-[0_0_15px_rgba(234,179,8,0.5)]"
               onClick={() => setCurrentBg(idx)}
             />
           ))}
@@ -201,18 +206,16 @@ export default function LandingPage() {
         {/* BOTTOM RIGHT CAROUSEL CONTROLS */}
         <div className="absolute bottom-0 right-0 lg:right-16 flex z-40 backdrop-blur-md bg-white/10 dark:bg-black/20">
           <motion.button
-            whileHover={{ backgroundColor: "rgba(39, 39, 42, 0.9)", color: "#ffffff" }}
             whileTap={{ scale: 0.95 }}
             onClick={prevBg}
-            className="w-20 h-20 flex items-center justify-center text-white transition-colors border-r border-white/10"
+            className="w-20 h-20 flex items-center justify-center text-white transition-colors duration-300 border-r border-white/10 hover:bg-zinc-900/90 hover:border-yellow-500 hover:text-yellow-400"
           >
             <ArrowLeft size={24} />
           </motion.button>
           <motion.button
-            whileHover={{ backgroundColor: "rgba(34, 197, 94, 0.9)", color: "#ffffff" }}
             whileTap={{ scale: 0.95 }}
             onClick={nextBg}
-            className="w-20 h-20 flex items-center justify-center text-white transition-colors"
+            className="w-20 h-20 flex items-center justify-center text-white transition-colors duration-300 hover:bg-green-500/90 hover:border-green-500 hover:text-white"
           >
             <ArrowRight size={24} />
           </motion.button>
@@ -239,8 +242,8 @@ export default function LandingPage() {
               transition={{ duration: 0.8 }}
               className="flex items-center gap-4 mb-6"
             >
-              <div className="w-12 h-[1px] bg-green-500" />
-              <h3 className="text-green-600 dark:text-green-500 text-xs font-bold tracking-[0.4em] uppercase">About Us</h3>
+              <div className="w-12 h-[1px] bg-gradient-to-r from-yellow-400 to-green-500" />
+              <h3 className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-yellow-500 text-xs font-bold tracking-[0.4em] uppercase">About Us</h3>
             </motion.div>
 
             <motion.h2
@@ -253,15 +256,12 @@ export default function LandingPage() {
               Rooted in Tech. <br />Growing the Future.
             </motion.h2>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-zinc-700 dark:text-zinc-300 leading-relaxed mb-12 text-xl border-l-2 border-green-500 pl-8 font-serif-elegant"
-            >
-              &ldquo;Crop Mgr Assist bridges the gap between traditional farming and modern enterprise architecture. We provide a robust, microservice-driven platform designed specifically to handle large-scale agricultural data with absolute precision.&rdquo;
-            </motion.p>
+            <div className="border-l-2 border-green-500 pl-8 mb-12 h-[130px]">
+              <TypewriterText 
+                text="“Crop Mgr Assist bridges the gap between traditional farming and modern enterprise architecture. We provide a robust, microservice-driven platform designed specifically to handle large-scale agricultural data with absolute precision.”"
+                className="text-zinc-700 dark:text-zinc-300 leading-relaxed text-xl font-serif-elegant"
+              />
+            </div>
 
             <motion.div
               initial="hidden"
@@ -271,11 +271,11 @@ export default function LandingPage() {
               className="flex flex-wrap items-center gap-12"
             >
               {[
-                { icon: <Leaf className="text-green-600 dark:text-green-500" size={24} />, label: "Sustainable" },
-                { icon: <ShieldCheck className="text-green-600 dark:text-green-500" size={24} />, label: "Secure Data" }
+                { icon: <Leaf className="text-green-500" size={24} />, label: "Sustainable" },
+                { icon: <ShieldCheck className="text-yellow-500" size={24} />, label: "Secure Data" }
               ].map((item) => (
                 <motion.div key={item.label} variants={staggerItem} whileHover={{ scale: 1.05, y: -5 }} className="flex items-center gap-6 group cursor-pointer">
-                  <div className="w-16 h-16 border border-zinc-300 dark:border-white/20 flex items-center justify-center group-hover:border-green-500 group-hover:bg-green-500/10 transition-all duration-500 shadow-xl backdrop-blur-md animate-pulse-glow">
+                  <div className="w-16 h-16 border border-zinc-300 dark:border-white/20 flex items-center justify-center group-hover:border-yellow-400 group-hover:bg-gradient-to-br group-hover:from-yellow-500/10 group-hover:to-green-500/10 transition-all duration-500 shadow-xl backdrop-blur-md animate-pulse-glow">
                     {item.icon}
                   </div>
                   <span className="font-black tracking-widest text-sm uppercase">{item.label}</span>
@@ -289,35 +289,35 @@ export default function LandingPage() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative h-[600px] w-full border border-zinc-200 dark:border-white/10 shadow-2xl group overflow-hidden"
+            className="relative h-[600px] w-full border border-zinc-200 dark:border-white/10 shadow-[0_0_40px_rgba(34,197,94,0.1)] group overflow-hidden"
           >
             <motion.div
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 1.2, ease: "easeOut" }}
               className="absolute inset-0 w-full h-full"
             >
-              <div className="absolute inset-0 bg-green-500/10 dark:bg-green-900/40 mix-blend-multiply z-10 transition-opacity duration-700 group-hover:opacity-0" />
+              <div className="absolute inset-0 bg-green-500/10 dark:bg-gradient-to-t dark:from-yellow-900/30 dark:to-green-900/40 mix-blend-multiply z-10 transition-opacity duration-700 group-hover:opacity-0" />
               <img src={backgrounds[1]} alt="Agriculture Enterprise" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
             </motion.div>
           </motion.div>
         </motion.div>
 
         {/* BOTTOM GRADIENT FADE INTO SERVICES */}
-        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-green-900/20 dark:from-green-950/30 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-[#0e1610] to-transparent pointer-events-none z-20 hidden dark:block" />
+        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-zinc-100 to-transparent pointer-events-none z-20 block dark:hidden" />
       </section>
 
       {/* ════════════════════ SERVICES SECTION ════════════════════ */}
-      <section id="services" className="relative w-full py-40 px-8 lg:px-32 overflow-hidden">
+      <section id="services" className="relative w-full py-40 px-8 lg:px-32 overflow-hidden bg-zinc-100 dark:bg-[#0e1610]">
 
-        {/* Agriculture Background Image */}
+        {/* Agriculture Background Image with deep blend */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-fixed opacity-15 dark:opacity-10"
+          className="absolute inset-0 bg-cover bg-center bg-fixed opacity-20 dark:opacity-50 mix-blend-overlay"
           style={{ backgroundImage: `url('${servicesBg}')` }}
         />
-        <div className="absolute inset-0 bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-sm" />
-
-        {/* Subtle Grid Overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#22c55e08_1px,transparent_1px),linear-gradient(to_bottom,#22c55e08_1px,transparent_1px)] bg-[size:40px_40px]" />
+        
+        {/* NEW 3D FLOATING POLLEN BACKGROUND */}
+        <ThreeServicesBg />
 
         <motion.div
           initial="hidden"
@@ -327,16 +327,16 @@ export default function LandingPage() {
           className="text-center max-w-4xl mx-auto mb-28 relative z-10"
         >
           <div className="flex items-center justify-center gap-6 mb-6">
-            <motion.div initial={{ width: 0 }} whileInView={{ width: 48 }} viewport={{ once: false }} transition={{ duration: 0.8 }} className="h-[1px] bg-green-500" />
-            <h3 className="text-green-600 dark:text-green-500 text-xs font-bold tracking-[0.4em] uppercase">Our Services</h3>
-            <motion.div initial={{ width: 0 }} whileInView={{ width: 48 }} viewport={{ once: false }} transition={{ duration: 0.8 }} className="h-[1px] bg-green-500" />
+            <motion.div initial={{ width: 0 }} whileInView={{ width: 48 }} viewport={{ once: false }} transition={{ duration: 0.8 }} className="h-[1px] bg-gradient-to-r from-yellow-400 to-green-500" />
+            <h3 className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-yellow-500 text-xs font-bold tracking-[0.4em] uppercase">Our Services</h3>
+            <motion.div initial={{ width: 0 }} whileInView={{ width: 48 }} viewport={{ once: false }} transition={{ duration: 0.8 }} className="h-[1px] bg-gradient-to-r from-green-500 to-yellow-400" />
           </div>
           <motion.h2
             initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
             whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             viewport={{ once: false }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="text-5xl lg:text-7xl font-black tracking-tight font-space"
+            className="text-5xl lg:text-7xl font-black tracking-tight font-space text-zinc-900 dark:text-zinc-50 drop-shadow-2xl"
           >
             Enterprise Solutions
           </motion.h2>
@@ -358,18 +358,18 @@ export default function LandingPage() {
               key={index}
               variants={staggerItem}
               whileHover={{ y: -12, scale: 1.02 }}
-              className="backdrop-blur-3xl bg-white/70 dark:bg-zinc-950/70 p-14 border border-zinc-200/50 dark:border-white/10 transition-all duration-500 hover:border-green-500 dark:hover:border-green-500 group relative overflow-hidden shadow-2xl animate-pulse-glow"
+              className="backdrop-blur-xl bg-white/70 dark:bg-black/60 p-14 border border-zinc-200/80 dark:border-white/10 transition-all duration-500 hover:border-yellow-500/50 dark:hover:border-yellow-500/30 group relative overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_50px_rgba(234,179,8,0.15)] animate-pulse-glow"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-green-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-700 ease-out" />
-              <div className="w-20 h-20 border border-zinc-300 dark:border-white/20 flex items-center justify-center text-zinc-400 group-hover:text-green-500 group-hover:border-green-500 transition-all duration-500 mb-10 shadow-lg backdrop-blur-md bg-white/50 dark:bg-black/30">
+              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-green-500 to-yellow-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-700 ease-out" />
+              <div className="w-20 h-20 border border-zinc-300 dark:border-white/20 flex items-center justify-center text-zinc-400 group-hover:text-yellow-500 group-hover:border-yellow-500 transition-all duration-500 mb-10 shadow-lg backdrop-blur-md bg-white/50 dark:bg-black/30">
                 {service.icon}
               </div>
               <motion.h4
-                className="text-3xl font-black mb-6 font-space group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-500"
+                className="text-3xl font-black mb-6 font-space group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-green-600 group-hover:to-yellow-500 dark:group-hover:from-green-400 dark:group-hover:to-yellow-400 transition-colors duration-500"
               >
                 {service.title}
               </motion.h4>
-              <p className="text-zinc-600 dark:text-zinc-300 text-lg leading-relaxed border-l-2 border-zinc-200 dark:border-zinc-700 pl-4 group-hover:border-green-500 transition-colors duration-500 font-serif-elegant">
+              <p className="text-zinc-600 dark:text-zinc-300 text-lg leading-relaxed border-l-2 border-zinc-200 dark:border-zinc-700 pl-4 group-hover:border-yellow-500 transition-colors duration-500 font-serif-elegant">
                 &ldquo;{service.desc}&rdquo;
               </p>
             </motion.div>
@@ -377,7 +377,7 @@ export default function LandingPage() {
         </motion.div>
 
         {/* BOTTOM GRADIENT FADE INTO CONTACT */}
-        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 to-transparent pointer-events-none z-20" />
       </section>
 
       {/* ════════════════════ CONTACT SECTION ════════════════════ */}
@@ -398,8 +398,8 @@ export default function LandingPage() {
               transition={{ duration: 0.8 }}
               className="flex items-center gap-4 mb-6"
             >
-              <div className="w-12 h-[1px] bg-green-500" />
-              <h3 className="text-green-600 dark:text-green-500 text-xs font-bold tracking-[0.4em] uppercase">Contact</h3>
+              <div className="w-12 h-[1px] bg-gradient-to-r from-yellow-400 to-green-500" />
+              <h3 className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-yellow-500 text-xs font-bold tracking-[0.4em] uppercase">Contact</h3>
             </motion.div>
 
             <motion.h2
@@ -412,15 +412,12 @@ export default function LandingPage() {
               Ready to Scale? <br />Let&apos;s Connect.
             </motion.h2>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-zinc-700 dark:text-zinc-300 leading-relaxed mb-12 text-xl border-l-2 border-green-500 pl-8 font-serif-elegant"
-            >
-              &ldquo;Reach out to our team of agricultural engineers. We&apos;re ready to integrate our platform into your existing enterprise architecture seamlessly.&rdquo;
-            </motion.p>
+            <div className="border-l-2 border-yellow-500 pl-8 mb-12 h-[100px]">
+              <TypewriterText 
+                text="“Reach out to our team of agricultural engineers. We're ready to integrate our platform into your existing enterprise architecture seamlessly.”"
+                className="text-zinc-700 dark:text-zinc-300 leading-relaxed text-xl font-serif-elegant"
+              />
+            </div>
           </div>
 
           {/* RIGHT SIDE — Web3Forms */}
@@ -432,21 +429,21 @@ export default function LandingPage() {
             className="flex-1"
           >
             <form onSubmit={onSubmit} className="flex flex-col gap-8 relative z-10 backdrop-blur-3xl bg-white/50 dark:bg-zinc-950/50 p-12 border border-zinc-200/50 dark:border-white/10 shadow-2xl">
-              <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-green-400 to-green-600" />
+              <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-yellow-400 to-green-600" />
 
               <div className="flex flex-col gap-3">
                 <label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-2">Full Name</label>
-                <input id="name" name="name" type="text" required placeholder="John Doe" className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-green-500 focus:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all duration-300" />
+                <input id="name" name="name" type="text" required placeholder="John Doe" className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-yellow-500 focus:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 font-sans" />
               </div>
 
               <div className="flex flex-col gap-3">
                 <label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-2">Email Address</label>
-                <input id="email" name="email" type="email" required placeholder="john@enterprise.com" className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-green-500 focus:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all duration-300" />
+                <input id="email" name="email" type="email" required placeholder="john@enterprise.com" className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-yellow-500 focus:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 font-sans" />
               </div>
 
               <div className="flex flex-col gap-3">
                 <label htmlFor="message" className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-2">Message</label>
-                <textarea id="message" name="message" required placeholder="How can we help?" rows={5} className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-green-500 focus:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all duration-300 resize-none" />
+                <textarea id="message" name="message" required placeholder="How can we help?" rows={5} className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-yellow-500 focus:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 resize-none font-sans" />
               </div>
 
               <motion.button
@@ -454,9 +451,9 @@ export default function LandingPage() {
                 disabled={formLoading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 font-black py-6 flex items-center justify-center gap-4 hover:bg-green-600 dark:hover:bg-green-500 hover:text-white dark:hover:text-zinc-950 transition-all duration-500 uppercase tracking-[0.3em] text-sm mt-2 shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 font-black py-6 flex items-center justify-center gap-4 hover:bg-gradient-to-r hover:from-yellow-500 hover:to-green-500 hover:text-white dark:hover:text-zinc-950 transition-all duration-500 uppercase tracking-[0.3em] text-sm mt-2 shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed group"
               >
-                <Mail size={20} />
+                <Mail size={20} className="group-hover:animate-bounce" />
                 {formLoading ? "Sending..." : "Send Message"}
               </motion.button>
 
