@@ -10,7 +10,6 @@ export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   const menuRef = useRef<HTMLDivElement>(null);
@@ -19,18 +18,7 @@ export default function Navbar() {
   useEffect(() => { setMounted(true); }, []);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    const previous = scrollY.getPrevious() || 0;
-    
-    // Determine if scrolled past 50px
     setIsScrolled(latest > 50);
-    
-    // Directional scroll logic
-    if (latest > previous && latest > 150) {
-      setIsVisible(false);
-      if (isMenuOpen) setIsMenuOpen(false);
-    } else if (latest < previous) {
-      setIsVisible(true);
-    }
   });
 
   // Lock body scroll when menu is open
@@ -58,17 +46,13 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ═══════════════════ MAIN NAVBAR (Hide on Scroll Down, Show on Scroll Up) ═══════════════════ */}
-      <motion.nav
-        initial={{ y: 0 }}
-        animate={{ y: isVisible ? 0 : "-100%" }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 left-0 w-full z-50"
-        style={{
-          background: isScrolled ? (theme === 'dark' ? 'rgba(9, 9, 11, 0.95)' : 'rgba(255, 255, 255, 0.95)') : 'transparent',
-          borderBottom: isScrolled ? (theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)') : '1px solid transparent',
-          backdropFilter: isScrolled ? 'blur(10px)' : 'none',
-        }}
+      {/* ═══════════════════ MAIN NAVBAR (Always visible, glass mist on scroll) ═══════════════════ */}
+      <nav
+        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+          isScrolled 
+            ? 'bg-white/40 dark:bg-zinc-950/40 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-lg shadow-black/5 dark:shadow-black/20' 
+            : 'bg-transparent border-b border-transparent'
+        }`}
       >
         <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between text-zinc-900 dark:text-zinc-50 transition-all duration-300">
           
@@ -138,7 +122,7 @@ export default function Navbar() {
             </div>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* ═══════════════════ FULLSCREEN MENU OVERLAY (CIRCLE REVEAL) ═══════════════════ */}
       <AnimatePresence>
