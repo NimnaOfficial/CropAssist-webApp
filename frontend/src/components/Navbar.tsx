@@ -42,6 +42,16 @@ export default function Navbar() {
     }, 400);
   }, []);
 
+  const toggleTheme = () => {
+    if (!document.startViewTransition) {
+      setTheme(theme === "dark" ? "light" : "dark");
+      return;
+    }
+    document.startViewTransition(() => {
+      setTheme(theme === "dark" ? "light" : "dark");
+    });
+  };
+
   const navLinks = ["Home", "About", "Services", "Contact"];
 
   return (
@@ -98,7 +108,7 @@ export default function Navbar() {
                 <motion.button
                   whileHover={{ scale: 1.15, rotate: 180 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  onClick={toggleTheme}
                   className="w-10 h-10 flex items-center justify-center border border-zinc-300 dark:border-zinc-700 hover:border-green-500 dark:hover:bg-green-500/10 rounded-full transition-all duration-300"
                 >
                   {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
@@ -184,7 +194,7 @@ export default function Navbar() {
               >
                 {mounted && (
                   <button
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    onClick={toggleTheme}
                     className="w-14 h-14 flex items-center justify-center border border-white/10 rounded-full hover:border-green-500 hover:bg-green-500/10 text-white/60 hover:text-green-400 transition-all duration-300 bg-white/5"
                   >
                     {theme === "dark" ? <Sun size={24} /> : <Moon size={24} />}

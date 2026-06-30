@@ -50,9 +50,9 @@ export default function LandingPage() {
 
   /* ===== Smooth fade-in/out variants ===== */
   const fadeUp: Variants = {
-    hidden: { opacity: 0, y: 80, scale: 0.96, filter: "blur(6px)" },
+    hidden: { opacity: 0, y: 80, scale: 0.96 },
     visible: {
-      opacity: 1, y: 0, scale: 1, filter: "blur(0px)",
+      opacity: 1, y: 0, scale: 1,
       transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] }
     }
   };
@@ -90,7 +90,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 1.8, ease: "easeInOut" }}
-            className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat bg-fixed will-change-transform"
+            className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat will-change-transform"
             style={{ backgroundImage: `url('${backgrounds[currentBg]}')` }}
           />
         </AnimatePresence>
@@ -232,7 +232,7 @@ export default function LandingPage() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.2 }}
           variants={fadeUp}
           className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10"
         >
@@ -251,7 +251,7 @@ export default function LandingPage() {
             <motion.h2
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
               className="text-5xl lg:text-7xl font-black tracking-tight mb-10 font-space"
             >
@@ -268,7 +268,7 @@ export default function LandingPage() {
             <motion.div
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               variants={staggerContainer}
               className="flex flex-wrap items-center gap-12"
             >
@@ -277,7 +277,7 @@ export default function LandingPage() {
                 { icon: <ShieldCheck className="text-yellow-500" size={24} />, label: "Secure Data" }
               ].map((item) => (
                 <motion.div key={item.label} variants={staggerItem} whileHover={{ scale: 1.05, y: -5 }} className="flex items-center gap-6 group cursor-pointer">
-                  <div className="w-16 h-16 border border-zinc-300 dark:border-white/20 flex items-center justify-center group-hover:border-yellow-400 group-hover:bg-gradient-to-br group-hover:from-yellow-500/10 group-hover:to-green-500/10 transition-all duration-500 shadow-xl backdrop-blur-md animate-pulse-glow">
+                  <div className="w-16 h-16 border border-zinc-300 dark:border-white/20 flex items-center justify-center group-hover:border-yellow-400 group-hover:bg-gradient-to-br group-hover:from-yellow-500/10 group-hover:to-green-500/10 transition-all duration-500 shadow-xl animate-pulse-glow">
                     {item.icon}
                   </div>
                   <span className="font-black tracking-widest text-sm uppercase">{item.label}</span>
@@ -289,7 +289,7 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, x: 80 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="relative h-[600px] w-full border border-zinc-200 dark:border-white/10 shadow-[0_0_40px_rgba(34,197,94,0.1)] group overflow-hidden"
           >
@@ -314,7 +314,7 @@ export default function LandingPage() {
 
         {/* Agriculture Background Image with deep blend */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-fixed opacity-20 dark:opacity-50 mix-blend-overlay"
+          className="absolute inset-0 bg-cover bg-center opacity-20 dark:opacity-50 mix-blend-overlay"
           style={{ backgroundImage: `url('${servicesBg}')` }}
         />
         
@@ -324,19 +324,19 @@ export default function LandingPage() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.2 }}
           variants={fadeUp}
           className="text-center max-w-4xl mx-auto mb-28 relative z-10"
         >
           <div className="flex items-center justify-center gap-6 mb-6">
-            <motion.div initial={{ width: 0 }} whileInView={{ width: 48 }} viewport={{ once: false }} transition={{ duration: 0.8 }} className="h-[1px] bg-gradient-to-r from-yellow-400 to-green-500" />
+            <motion.div initial={{ width: 0 }} whileInView={{ width: 48 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="h-[1px] bg-gradient-to-r from-yellow-400 to-green-500" />
             <h3 className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-yellow-500 text-xs font-bold tracking-[0.4em] uppercase">Our Services</h3>
-            <motion.div initial={{ width: 0 }} whileInView={{ width: 48 }} viewport={{ once: false }} transition={{ duration: 0.8 }} className="h-[1px] bg-gradient-to-r from-green-500 to-yellow-400" />
+            <motion.div initial={{ width: 0 }} whileInView={{ width: 48 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="h-[1px] bg-gradient-to-r from-green-500 to-yellow-400" />
           </div>
           <motion.h2
-            initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
-            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            viewport={{ once: false }}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="text-5xl lg:text-7xl font-black tracking-tight font-space text-zinc-900 dark:text-zinc-50 drop-shadow-2xl"
           >
@@ -347,7 +347,7 @@ export default function LandingPage() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: false, amount: 0.1 }}
+          viewport={{ once: true, amount: 0.1 }}
           variants={staggerContainer}
           className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-10"
         >
@@ -364,7 +364,7 @@ export default function LandingPage() {
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-green-500/5 to-transparent rounded-bl-full" />
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-green-500 to-yellow-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-700 ease-out" />
-              <div className="w-20 h-20 border border-zinc-300 dark:border-white/20 flex items-center justify-center text-zinc-400 group-hover:text-yellow-500 group-hover:border-yellow-500 transition-all duration-500 mb-10 shadow-lg backdrop-blur-md bg-white/50 dark:bg-black/30">
+              <div className="w-20 h-20 border border-zinc-300 dark:border-white/20 flex items-center justify-center text-zinc-400 group-hover:text-yellow-500 group-hover:border-yellow-500 transition-all duration-500 mb-10 shadow-lg bg-zinc-100/50 dark:bg-black/30">
                 {service.icon}
               </div>
               <motion.h4
@@ -388,7 +388,7 @@ export default function LandingPage() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.2 }}
           variants={fadeUp}
           className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-20 relative z-10"
         >
@@ -406,9 +406,9 @@ export default function LandingPage() {
             </motion.div>
 
             <motion.h2
-              initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
-              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              viewport={{ once: false }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
               className="text-5xl lg:text-7xl font-black tracking-tight mb-10 font-space"
             >
@@ -427,7 +427,7 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, x: 80 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="flex-1"
           >

@@ -20,10 +20,10 @@ export default function TypewriterText({ text, className = "", delay = 0 }: { te
         <motion.span
           key={index}
           variants={{
-            hidden: { opacity: 0, filter: "blur(4px)", y: 5 },
+            hidden: { opacity: 0, y: 5 },
             visible: { 
-              opacity: 1, filter: "blur(0px)", y: 0,
-              transition: { duration: 0.1, delay: delay + index * 0.03 } 
+              opacity: 1, y: 0,
+              transition: { duration: 0.08, delay: delay + index * 0.025 } 
             }
           }}
           className="inline-block"

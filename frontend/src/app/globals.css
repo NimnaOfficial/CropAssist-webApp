@@ -1,6 +1,19 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ============ VIEW TRANSITIONS (THEME CHANGE) ============ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.8s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
 /* ============ ULTRA SMOOTH SCROLLING ============ */
 /* Lenis handles smooth scrolling; CSS smooth scroll causes conflicts */
 

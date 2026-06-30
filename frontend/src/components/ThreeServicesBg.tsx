@@ -5,7 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 function FloatingPollen() {
-  const count = 180;
+  const count = 40;
   const mesh = useRef<THREE.InstancedMesh>(null);
   
   const particles = useMemo(() => {
@@ -57,7 +57,7 @@ function FloatingPollen() {
 export default function ThreeServicesBg() {
   return (
     <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
-      <Canvas camera={{ position: [0, 0, 15], fov: 75 }}>
+      <Canvas camera={{ position: [0, 0, 15], fov: 75 }} dpr={[1, 1.5]}>
         <ambientLight intensity={1} />
         <FloatingPollen />
       </Canvas>
