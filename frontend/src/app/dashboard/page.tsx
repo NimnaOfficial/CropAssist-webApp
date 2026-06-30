@@ -826,6 +826,29 @@ export default function DashboardPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ═══════════════════ MOBILE BOTTOM NAV ═══════════════════ */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 px-6 py-3 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] safe-area-pb">
+        {sidebarNavMain.map((item) => {
+          const Icon = item.icon;
+          const active = activeNav === item.id;
+          return (
+            <motion.button
+              key={item.id}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setActiveNav(item.id)}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors duration-300 ${
+                active ? "text-green-600 dark:text-green-400" : "text-zinc-500 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white"
+              }`}
+            >
+              <div className={`p-1.5 rounded-full transition-colors ${active ? "bg-green-500/10" : "bg-transparent"}`}>
+                <Icon size={20} strokeWidth={active ? 2 : 1.5} />
+              </div>
+              <span className="text-[10px] font-medium tracking-wide">{item.label}</span>
+            </motion.button>
+          );
+        })}
+      </div>
     </div>
   );
 }

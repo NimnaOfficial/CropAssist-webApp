@@ -383,7 +383,7 @@ export default function ManagerDashboard() {
 
       {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
       <div className="flex-1 relative z-10 flex flex-col w-full max-w-full">
-        <main className="flex-1 p-6 md:p-8 flex flex-col">
+        <main className="flex-1 p-6 md:p-8 pb-24 md:pb-8 flex flex-col">
           
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -650,12 +650,12 @@ export default function ManagerDashboard() {
 
           {/* ════════ MESSAGES TAB ════════ */}
           {activeTab === "messages" && (
-            <motion.div key="messages" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-4">
-              <div className="w-72 flex-shrink-0 bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 flex flex-col shadow-sm dark:shadow-none">
+            <motion.div key="messages" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col md:flex-row gap-4 min-h-[60vh]">
+              <div className="w-full md:w-72 flex-shrink-0 bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 flex flex-col shadow-sm dark:shadow-none rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-zinc-200 dark:border-white/5">
                   <h3 className="text-sm font-gelasio text-zinc-900 dark:text-white mb-3">Conversations</h3>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 overflow-y-auto max-h-[30vh] md:max-h-none">
                   {farmers.map(f => (
                     <div key={f.id} onClick={() => setChatFarmer(f)} className={`px-4 py-3 cursor-pointer border-b border-zinc-100 dark:border-white/5 transition-colors ${chatFarmer?.id === f.id ? "bg-green-500/5 dark:bg-green-500/10 border-l-2 border-l-green-500" : "hover:bg-zinc-50 dark:hover:bg-white/[0.02]"}`}>
                       <div className="flex items-center gap-3">
@@ -670,7 +670,7 @@ export default function ManagerDashboard() {
                 </div>
               </div>
 
-              <div className="flex-1 bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 flex flex-col shadow-sm dark:shadow-none">
+              <div className="flex-1 bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 flex flex-col shadow-sm dark:shadow-none rounded-xl overflow-hidden">
                 {chatFarmer ? (
                   <>
                     <div className="px-6 py-4 border-b border-zinc-200 dark:border-white/5 flex items-center justify-between bg-zinc-50/50 dark:bg-white/[0.02]">
@@ -845,6 +845,29 @@ export default function ManagerDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ═══════════════════ MOBILE BOTTOM NAV ═══════════════════ */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 px-6 py-3 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] safe-area-pb">
+        {navTabs.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <motion.button
+              key={tab.id}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors duration-300 ${
+                active ? "text-green-600 dark:text-green-400" : "text-zinc-500 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white"
+              }`}
+            >
+              <div className={`p-1.5 rounded-full transition-colors ${active ? "bg-green-500/10" : "bg-transparent"}`}>
+                <Icon size={20} strokeWidth={active ? 2 : 1.5} />
+              </div>
+              <span className="text-[10px] font-medium tracking-wide whitespace-nowrap">{tab.label.split(' ')[0]}</span>
+            </motion.button>
+          );
+        })}
+      </div>
     </div>
   );
 }

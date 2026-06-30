@@ -136,7 +136,7 @@ export default function SignupPage() {
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1.2, ease: "easeOut" }}
-          className="w-full lg:w-2/3 flex flex-col justify-between text-white p-8 lg:p-24 min-h-screen lg:min-h-0"
+          className="w-full lg:w-2/3 flex flex-col justify-between text-white p-8 pt-12 lg:p-24 min-h-[40vh] lg:min-h-screen"
         >
           {/* TOP */}
           <Link href="/" className="inline-flex items-center gap-3 text-white/70 hover:text-green-400 transition-colors duration-300">
@@ -175,7 +175,7 @@ export default function SignupPage() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-          className="w-full lg:w-1/3 backdrop-blur-xl bg-white/5 border-l border-white/10 p-8 lg:p-16 flex flex-col justify-between min-h-screen"
+          className="w-full lg:w-1/3 backdrop-blur-xl bg-white/10 lg:bg-white/5 border-t lg:border-t-0 lg:border-l border-white/20 lg:border-white/10 p-8 lg:p-16 flex flex-col justify-center lg:justify-between min-h-[60vh] lg:min-h-screen shadow-[0_-20px_40px_rgba(0,0,0,0.5)] lg:shadow-none rounded-t-[40px] lg:rounded-none z-30"
         >
           {/* TOP */}
           <div className="flex justify-between items-center pb-6 border-b border-white/10 mt-6 lg:mt-12">

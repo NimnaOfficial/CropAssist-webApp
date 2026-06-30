@@ -19,7 +19,7 @@
 
 /* Lenis-style smooth scroll feel for all browsers */
 html {
-  font-size: 90%; /* Scales everything down by 10% for an enterprise zoomed-out feel */
+  font-size: 80%; /* Scales everything down by 20% total for an enterprise zoomed-out feel */
 }
 
 html, body {
