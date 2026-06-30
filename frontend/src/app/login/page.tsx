@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { User, Lock, Eye, EyeOff, ArrowRight, Leaf, Sprout, ChevronLeft } from "lucide-react";
 import TypewriterText from "@/src/components/TypewriterText";
 
@@ -65,6 +66,7 @@ function FloatingLeaves() {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ username: "", password: "" });
 
@@ -204,9 +206,9 @@ export default function LoginPage() {
 
           {/* BOTTOM */}
           <div className="flex flex-col items-center gap-6 mb-6 lg:mb-12">
-            <Link href="/" className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm uppercase tracking-widest font-light">
-              <ChevronLeft size={16} strokeWidth={1.5} /> Return Home
-            </Link>
+            <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm uppercase tracking-widest font-light cursor-pointer">
+              <ChevronLeft size={16} strokeWidth={1.5} /> Go Back
+            </button>
             
             {/* FOOTER */}
             <div className="flex gap-6 text-[10px] text-white/30 uppercase tracking-widest">

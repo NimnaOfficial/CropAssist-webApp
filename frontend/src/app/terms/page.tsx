@@ -3,8 +3,11 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function TermsPage() {
+    const router = useRouter();
+
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-32 pb-24 selection:bg-green-500/30">
             <motion.div
@@ -13,9 +16,9 @@ export default function TermsPage() {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="max-w-3xl mx-auto px-8"
             >
-                <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold tracking-widest uppercase text-green-600 dark:text-green-500 hover:text-green-700 dark:hover:text-green-400 transition-colors mb-12">
-                    <ArrowLeft size={16} /> Back to Home
-                </Link>
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-sm font-bold tracking-widest uppercase text-green-600 dark:text-green-500 hover:text-green-700 dark:hover:text-green-400 transition-colors mb-12 cursor-pointer">
+                    <ArrowLeft size={16} /> Go Back
+                </button>
 
                 <h1 className="text-4xl lg:text-5xl font-black tracking-tight text-zinc-900 dark:text-white mb-4">
                     Terms of Service

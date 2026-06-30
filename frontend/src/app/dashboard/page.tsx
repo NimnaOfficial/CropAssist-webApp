@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Sprout, User, Search, Sun, Moon, Bell, LogOut,
   Wheat, ArrowUpRight, ArrowDownRight, Leaf, MapPin, Calendar, 
   ChevronRight, MoreHorizontal, Plus, Edit, Trash2, Droplets, Users, BarChart3, Bug,
-  MessageSquare, Send, X, Check, PanelLeftClose, PanelLeftOpen
+  MessageSquare, Send, X, Check, PanelLeftClose, PanelLeftOpen, Download, Settings, RefreshCw, FileText, Share2, HelpCircle
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import DashboardBackground from "../../components/DashboardBackground";
@@ -159,6 +159,9 @@ export default function DashboardPage() {
 
   // Chat State
   const [chatOpen, setChatOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [selectedDateFilter, setSelectedDateFilter] = useState("Today");
+  const [donutKey, setDonutKey] = useState(0);
   const [chatMessages, setChatMessages] = useState([
     { id: 1, sender: "Manager", text: "Hello John, any updates on Field A-01? Let me know if you need assistance.", time: "09:00 AM" }
   ]);
@@ -239,7 +242,7 @@ export default function DashboardPage() {
           onMouseLeave={() => setSidebarOpen(false)}
           animate={{ width: isSidebarOpen ? 256 : 80 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="hidden lg:flex flex-col h-screen sticky top-0 bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-md border-r border-zinc-200 dark:border-white/5 p-4 justify-between flex-shrink-0 transition-colors duration-500 relative z-20 overflow-hidden whitespace-nowrap shadow-xl"
+          className="hidden lg:flex flex-col h-screen sticky top-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl border-r border-zinc-200 dark:border-white/10 p-4 justify-between flex-shrink-0 transition-colors duration-500 relative z-20 overflow-hidden whitespace-nowrap shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.4)]"
         >
           <div className="flex flex-col h-full">
             <div className="flex items-center gap-3 mb-10 h-10 px-2">
@@ -248,8 +251,8 @@ export default function DashboardPage() {
               </div>
               {isSidebarOpen && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1">
-                  <p className="text-sm font-normal text-zinc-900 dark:text-white">John Farmer</p>
-                  <p className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest">Enterprise</p>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">{profileData.fullName}</p>
+                  <p className="text-[10px] text-zinc-500 dark:text-white/40 truncate w-32">{profileData.email}</p>
                 </motion.div>
               )}
             </div>
@@ -321,12 +324,26 @@ export default function DashboardPage() {
                 {resolvedTheme === "dark" ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
               </motion.button>
             )}
-            <button className="relative w-9 h-9 flex items-center justify-center border border-zinc-200 dark:border-white/10 hover:border-green-500/30 text-zinc-500 dark:text-white transition-colors bg-white/50 dark:bg-black/20 backdrop-blur-md">
-              <Bell size={16} strokeWidth={1.5} />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-zinc-50 dark:border-zinc-950" />
-            </button>
-            <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-xs text-white shadow-md">
-              JF
+
+            
+            <div className="relative">
+              <button onClick={() => setActiveDropdown(activeDropdown === 'profile' ? null : 'profile')} className="w-9 h-9 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-xs text-white shadow-md rounded-full hover:scale-105 transition-transform">
+                JF
+              </button>
+              <AnimatePresence>
+                {activeDropdown === 'profile' && (
+                  <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-56 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-3xl shadow-2xl py-2 z-50 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-zinc-200 dark:border-white/10 mb-2">
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-white">{profileData.fullName}</p>
+                      <p className="text-[10px] text-zinc-500 dark:text-white/50 truncate">{profileData.email}</p>
+                    </div>
+                    <button onClick={() => {setActiveDropdown(null); setActiveNav('profile');}} className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-3 text-zinc-600 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors"><User size={14}/> View Profile</button>
+                    <button onClick={() => {setActiveDropdown(null); setActiveNav('profile'); setIsEditingProfile(true);}} className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-3 text-zinc-600 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors"><Settings size={14}/> Edit Profile</button>
+                    <button onClick={() => {setActiveDropdown(null); setChatOpen(true);}} className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-3 text-zinc-600 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors"><MessageSquare size={14}/> Open Chat</button>
+                    <Link href="/login" className="w-full text-left px-4 py-2.5 mt-2 text-xs flex items-center gap-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors border-t border-zinc-200 dark:border-white/10"><LogOut size={14}/> Log Out</Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
@@ -335,9 +352,20 @@ export default function DashboardPage() {
           <div className="flex-1 flex flex-col gap-8 pb-24">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-normal font-gelasio tracking-wide capitalize text-zinc-900 dark:text-white">{activeNav}</h1>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest">Today</span>
-                <Calendar size={14} className="text-zinc-500 dark:text-white/40" strokeWidth={1.5} />
+              <div className="relative z-20">
+                <button onClick={() => setActiveDropdown(activeDropdown === 'date' ? null : 'date')} className="flex items-center gap-3 px-4 py-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors group cursor-pointer border border-transparent hover:border-zinc-300 dark:hover:border-white/20">
+                  <span className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{selectedDateFilter}</span>
+                  <Calendar size={14} className="text-zinc-500 dark:text-white/40 group-hover:text-green-500 transition-colors" strokeWidth={1.5} />
+                </button>
+                <AnimatePresence>
+                  {activeDropdown === 'date' && (
+                    <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-48 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                      {["Today", "Yesterday", "Last 7 Days", "This Month", "This Year"].map(t => (
+                        <button key={t} onClick={() => {setSelectedDateFilter(t); setActiveDropdown(null);}} className={`w-full text-left px-4 py-2.5 text-xs ${selectedDateFilter === t ? 'text-green-500 bg-zinc-100 dark:bg-white/5' : 'text-zinc-600 dark:text-white/70'} hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors`}>{t}</button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
@@ -349,7 +377,7 @@ export default function DashboardPage() {
                     {stats.map((stat, i) => {
                       const Icon = stat.icon;
                       return (
-                        <motion.div key={i} custom={i} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-6 hover:border-green-500/30 transition-all duration-300 group shadow-sm dark:shadow-none">
+                        <motion.div key={i} custom={i} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/60 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-6 rounded-3xl hover:border-green-500/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)] transition-all duration-500 group shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
                           <div className="flex items-center justify-between mb-4">
                             <span className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest">{stat.label}</span>
                             <Icon size={16} className="text-zinc-400 dark:text-white/20 group-hover:text-green-500 dark:group-hover:text-green-400 transition-colors" strokeWidth={1.5} />
@@ -366,15 +394,27 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    <motion.div custom={2} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-8 shadow-sm dark:shadow-none">
-                      <div className="flex items-center justify-between mb-8">
+                    <motion.div custom={2} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/60 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-8 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.1)] transition-shadow duration-500">
+                      <div className="flex items-center justify-between mb-8 relative z-20">
                         <h3 className="text-lg font-gelasio text-zinc-900 dark:text-white">Crop Distribution</h3>
-                        <MoreHorizontal size={16} className="text-zinc-400 dark:text-white/20" strokeWidth={1.5} />
+                        <div className="relative">
+                          <button onClick={() => setActiveDropdown(activeDropdown === 'cropDist' ? null : 'cropDist')} className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-400 dark:text-white/20 hover:text-zinc-900 dark:hover:text-white cursor-pointer">
+                            <MoreHorizontal size={16} strokeWidth={1.5} />
+                          </button>
+                          <AnimatePresence>
+                            {activeDropdown === 'cropDist' && (
+                              <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-48 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                                <button onClick={() => { setActiveDropdown(null); setDonutKey(k => k + 1); }} className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-3 text-zinc-600 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors"><RefreshCw size={14}/> Refresh Chart Data</button>
+                                <button onClick={() => { setActiveDropdown(null); setActiveNav('crops'); }} className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-3 text-zinc-600 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors"><Sprout size={14}/> View Crop Details</button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
-                      <DonutChart />
+                      <DonutChart key={donutKey} />
                     </motion.div>
 
-                    <motion.div custom={3} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-8 shadow-sm dark:shadow-none">
+                    <motion.div custom={3} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/60 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-8 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.1)] transition-shadow duration-500">
                       <div className="flex items-center justify-between mb-6">
                         <div>
                           <h3 className="text-lg font-gelasio text-zinc-900 dark:text-white">Total Yield</h3>
@@ -393,10 +433,22 @@ export default function DashboardPage() {
                     </motion.div>
                   </div>
 
-                  <motion.div custom={4} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-8 shadow-sm dark:shadow-none">
-                    <div className="flex items-center justify-between mb-6">
+                  <motion.div custom={4} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/60 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-6 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] relative overflow-hidden group hover:shadow-green-500/10 hover:border-green-500/30 transition-all duration-500">
+                    <div className="flex items-center justify-between mb-6 relative z-20">
                       <h3 className="text-lg font-gelasio text-zinc-900 dark:text-white">Active Crops Overview</h3>
-                      <MoreHorizontal size={16} className="text-zinc-400 dark:text-white/20" strokeWidth={1.5} />
+                      <div className="relative">
+                        <button onClick={() => setActiveDropdown(activeDropdown === 'activeCrops' ? null : 'activeCrops')} className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-400 dark:text-white/20 hover:text-zinc-900 dark:hover:text-white cursor-pointer">
+                          <MoreHorizontal size={16} strokeWidth={1.5} />
+                        </button>
+                        <AnimatePresence>
+                          {activeDropdown === 'activeCrops' && (
+                            <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-56 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                              <button onClick={() => {setActiveDropdown(null); openAddCrop();}} className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-3 text-zinc-600 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors"><Plus size={14}/> Add New Crop</button>
+                              <button onClick={() => {setActiveDropdown(null); setActiveNav('crops');}} className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-3 text-zinc-600 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors"><Edit size={14}/> Manage All Crops</button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-left">
@@ -592,7 +644,7 @@ export default function DashboardPage() {
           </aside>
         </main>
 
-        <footer className="border-t border-zinc-200 dark:border-white/5 px-8 py-6 flex items-center justify-between text-[10px] text-zinc-500 dark:text-white/20 uppercase tracking-widest relative z-10 bg-zinc-50/60 dark:bg-zinc-950/60 backdrop-blur-xl mt-auto">
+        <footer className="border-t border-zinc-200 dark:border-white/5 px-8 py-6 flex items-center justify-between text-[10px] text-zinc-500 dark:text-white/20 uppercase tracking-widest relative z-10 bg-white/50 dark:bg-zinc-950/60 backdrop-blur-xl mt-auto">
           <span>© 2026 Crop Mgr Assist. All rights reserved.</span>
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-zinc-900 dark:hover:text-white/50 transition-colors">Privacy</Link>
@@ -611,10 +663,10 @@ export default function DashboardPage() {
             dragListener={false}
             dragMomentum={false}
             initial={{ opacity: 0, y: 20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-6 right-6 w-80 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 shadow-2xl z-50 flex flex-col overflow-hidden rounded-xl"
+            className="fixed bottom-6 right-6 w-80 bg-white/70 dark:bg-[#0c0c0e]/80 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl z-50 flex flex-col overflow-hidden rounded-xl"
             style={{ height: '400px' }}
           >
-            <div onPointerDown={(e) => dragControls.start(e)} className="bg-zinc-100 dark:bg-white/5 border-b border-zinc-200 dark:border-white/10 p-4 flex items-center justify-between cursor-grab active:cursor-grabbing">
+            <div onPointerDown={(e) => dragControls.start(e)} className="bg-zinc-100/50 dark:bg-white/5 border-b border-zinc-200 dark:border-white/10 p-4 flex items-center justify-between cursor-grab active:cursor-grabbing">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-green-500/20 flex items-center justify-center rounded-full text-green-600 dark:text-green-400"><User size={14} /></div>
                 <div>
@@ -627,12 +679,12 @@ export default function DashboardPage() {
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-zinc-50/50 dark:bg-zinc-950/50">
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-zinc-50/50 dark:bg-transparent">
               {chatMessages.map(msg => (
                 <div key={msg.id} className={`flex flex-col ${msg.sender === "You" ? "items-end" : "items-start"}`}>
                   <span className="text-[9px] text-zinc-400 dark:text-white/30 mb-1">{msg.sender} • {msg.time}</span>
                   <div className={`px-4 py-2 text-xs max-w-[85%] leading-relaxed ${
-                    msg.sender === "You" ? "bg-green-500 text-white rounded-l-xl rounded-tr-xl" : "bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-white rounded-r-xl rounded-tl-xl"
+                    msg.sender === "You" ? "bg-green-500 text-white rounded-l-xl rounded-tr-xl" : "bg-zinc-200/50 dark:bg-white/10 text-zinc-900 dark:text-white rounded-r-xl rounded-tl-xl"
                   }`}>
                     {msg.text}
                   </div>
@@ -641,7 +693,7 @@ export default function DashboardPage() {
               <div ref={chatEndRef} />
             </div>
 
-            <form onSubmit={handleSendMsg} className="p-3 border-t border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 flex gap-2">
+            <form onSubmit={handleSendMsg} className="p-3 border-t border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-black/20 flex gap-2">
               <input 
                 type="text" 
                 value={newMsg}
@@ -666,7 +718,7 @@ export default function DashboardPage() {
           >
             <motion.div 
               initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 p-8 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto"
+              className="bg-white/70 dark:bg-[#0c0c0e]/80 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-8 w-full max-w-md rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <h3 className="text-xl font-gelasio mb-6 text-zinc-900 dark:text-white">{editingCropId ? "Edit Crop" : "Add New Crop"}</h3>
               <form onSubmit={handleSaveCrop} className="flex flex-col gap-4">
@@ -674,22 +726,22 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1 block">Crop Name</label>
-                    <input required value={cropForm.name} onChange={(e) => setCropForm({...cropForm, name: e.target.value})} type="text" className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors" placeholder="e.g. Rice (Samba)" />
+                    <input required value={cropForm.name} onChange={(e) => setCropForm({...cropForm, name: e.target.value})} type="text" className="w-full bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors" placeholder="e.g. Rice (Samba)" />
                   </div>
                   <div>
                     <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1 block">Field</label>
-                    <input required value={cropForm.field} onChange={(e) => setCropForm({...cropForm, field: e.target.value})} type="text" className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors" placeholder="e.g. Field A-01" />
+                    <input required value={cropForm.field} onChange={(e) => setCropForm({...cropForm, field: e.target.value})} type="text" className="w-full bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors" placeholder="e.g. Field A-01" />
                   </div>
                   <div>
                     <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1 block">Area (ha)</label>
-                    <input required value={cropForm.area} onChange={(e) => setCropForm({...cropForm, area: e.target.value})} type="text" className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors" placeholder="e.g. 2.5 ha" />
+                    <input required value={cropForm.area} onChange={(e) => setCropForm({...cropForm, area: e.target.value})} type="text" className="w-full bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors" placeholder="e.g. 2.5 ha" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1 block">Status</label>
-                    <select required value={cropForm.status} onChange={(e) => setCropForm({...cropForm, status: e.target.value})} className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors">
+                    <select required value={cropForm.status} onChange={(e) => setCropForm({...cropForm, status: e.target.value})} className="w-full bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors">
                       <option value="Seedling" className="bg-white text-black">Seedling</option>
                       <option value="Growing" className="bg-white text-black">Growing</option>
                       <option value="Mature" className="bg-white text-black">Mature</option>
@@ -698,18 +750,18 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1 block">Health (%)</label>
-                    <input required min="0" max="100" value={cropForm.health} onChange={(e) => setCropForm({...cropForm, health: Number(e.target.value)})} type="number" className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors" />
+                    <input required min="0" max="100" value={cropForm.health} onChange={(e) => setCropForm({...cropForm, health: Number(e.target.value)})} type="number" className="w-full bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1 block">Planted Date</label>
-                    <input required value={cropForm.planted} onChange={(e) => setCropForm({...cropForm, planted: e.target.value})} type="date" className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors [color-scheme:light] dark:[color-scheme:dark]" />
+                    <input required value={cropForm.planted} onChange={(e) => setCropForm({...cropForm, planted: e.target.value})} type="date" className="w-full bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors [color-scheme:light] dark:[color-scheme:dark]" />
                   </div>
                   <div>
                     <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1 block">Expected Harvest</label>
-                    <input required value={cropForm.harvest} onChange={(e) => setCropForm({...cropForm, harvest: e.target.value})} type="date" className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors [color-scheme:light] dark:[color-scheme:dark]" />
+                    <input required value={cropForm.harvest} onChange={(e) => setCropForm({...cropForm, harvest: e.target.value})} type="date" className="w-full bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2 text-sm text-zinc-900 dark:text-white focus:border-green-500/50 outline-none transition-colors [color-scheme:light] dark:[color-scheme:dark]" />
                   </div>
                 </div>
 
@@ -737,7 +789,7 @@ export default function DashboardPage() {
           >
             <motion.div 
               initial={{ scale: 0.95, opacity: 0, y: -20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: -20 }}
-              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 w-full max-w-xl shadow-2xl overflow-hidden"
+              className="bg-white/70 dark:bg-[#0c0c0e]/80 backdrop-blur-xl border border-zinc-200 dark:border-white/10 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden"
             >
               <div className="flex items-center px-4 py-3 border-b border-zinc-200 dark:border-white/5">
                 <Search size={18} className="text-zinc-400 dark:text-white/40 mr-3" strokeWidth={1.5} />

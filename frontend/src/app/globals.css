@@ -18,6 +18,10 @@
 /* Lenis handles smooth scrolling; CSS smooth scroll causes conflicts */
 
 /* Lenis-style smooth scroll feel for all browsers */
+html {
+  font-size: 90%; /* Scales everything down by 10% for an enterprise zoomed-out feel */
+}
+
 html, body {
   overscroll-behavior: none;
 }

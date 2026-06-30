@@ -1,83 +1,123 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { useRef, useMemo, useState, useEffect } from "react";
 import * as THREE from "three";
 import { useTheme } from "next-themes";
 
-function Particles() {
-  const { resolvedTheme } = useTheme();
-  const count = 500;
-  
-  const positions = useMemo(() => {
-    const pos = new Float32Array(count * 3);
-    for (let i = 0; i < count * 3; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 15;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 15;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 15;
+function SwirlingDots({ count, reverse }: { count: number; reverse: boolean }) {
+  // Create a perfectly polished circular texture for the dots
+  const dotTexture = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gradient.addColorStop(0, "rgba(255,255,255,1)");
+      gradient.addColorStop(0.5, "rgba(255,255,255,0.8)");
+      gradient.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 64, 64);
     }
-    return pos;
+    return new THREE.CanvasTexture(canvas);
   }, []);
+
+  const { positions, colors } = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    const cols = new Float32Array(count * 3);
+    
+    // Only Green and Yellow colors
+    const palette = [
+      new THREE.Color("#22c55e"), // green
+      new THREE.Color("#84cc16"), // lime green
+      new THREE.Color("#eab308"), // yellow
+      new THREE.Color("#fef08a"), // bright yellow
+    ];
+
+    for (let i = 0; i < count; i++) {
+      // "Dots are everywhere" - massive spherical volume
+      const radius = Math.random() * 30 + 5;
+      const theta = Math.random() * 2 * Math.PI;
+      const phi = Math.acos(Math.random() * 2 - 1);
+      
+      pos[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = radius * Math.cos(phi);
+      pos[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+      
+      const color = palette[Math.floor(Math.random() * palette.length)];
+      cols[i * 3] = color.r;
+      cols[i * 3 + 1] = color.g;
+      cols[i * 3 + 2] = color.b;
+    }
+    return { positions: pos, colors: cols };
+  }, [count]);
 
   const meshRef = useRef<THREE.Points>(null!);
-  const { viewport } = useThree();
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
-
-  // Cursor tracking
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      setMouse({
-        x: (event.clientX / window.innerWidth) * 2 - 1,
-        y: -(event.clientY / window.innerHeight) * 2 + 1
-      });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
   
   useFrame((state, delta) => {
-    if (meshRef.current) {
-      // Base gentle rotation
-      meshRef.current.rotation.y += delta * 0.02;
-      meshRef.current.rotation.x += delta * 0.01;
-      
-      // Cursor parallax effect (subtle)
-      const targetX = mouse.x * 0.5;
-      const targetY = mouse.y * 0.5;
-      
-      meshRef.current.position.x += (targetX - meshRef.current.position.x) * 0.05;
-      meshRef.current.position.y += (targetY - meshRef.current.position.y) * 0.05;
+    if (!meshRef.current) return;
+    
+    const speed = 0.015;
+    // Some move up roundly, others down roundly
+    if (reverse) {
+      meshRef.current.rotation.y -= delta * speed;
+      meshRef.current.rotation.x -= delta * (speed * 0.5);
+      meshRef.current.rotation.z -= delta * (speed * 0.2);
+    } else {
+      meshRef.current.rotation.y += delta * speed;
+      meshRef.current.rotation.x += delta * (speed * 0.5);
+      meshRef.current.rotation.z += delta * (speed * 0.2);
     }
   });
-
-  // Very subtle colors
-  const color = resolvedTheme === "dark" ? "#22c55e" : "#16a34a";
-  const opacity = resolvedTheme === "dark" ? 0.3 : 0.2;
 
   return (
     <points ref={meshRef}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
       <pointsMaterial 
-        size={0.03} 
-        color={color} 
-        transparent 
-        opacity={opacity} 
+        size={0.08} 
+        vertexColors={true}
+        map={dotTexture}
+        transparent={true} 
+        opacity={0.6} 
         sizeAttenuation={true}
-        blending={THREE.AdditiveBlending}
         depthWrite={false}
+        blending={THREE.AdditiveBlending}
       />
     </points>
   );
 }
 
 export default function DashboardBackground() {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Hydration fix: Return an empty div with the correct classes during SSR
+    return <div className="fixed inset-0 z-0 pointer-events-none bg-zinc-50 dark:bg-[#030303]" />;
+  }
+
+  const isDark = resolvedTheme === "dark";
+
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none opacity-40 mix-blend-screen transition-opacity duration-1000">
-      <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
-        <fog attach="fog" args={["#000", 3, 10]} />
-        <Particles />
+    <div className="fixed inset-0 z-0 pointer-events-none bg-zinc-50 dark:bg-[#030303]">
+      {/* 
+        ULTIMATE 3D GREEN & YELLOW SWIRLING GALAXY 
+      */}
+      <Canvas camera={{ position: [0, 0, 20], fov: 60 }} dpr={[1, 2]}>
+        <fog attach="fog" args={[isDark ? "#030303" : "#fafafa", 10, 40]} />
+        {/* Layer 1: Swirling Upwards */}
+        <SwirlingDots count={2000} reverse={false} />
+        {/* Layer 2: Swirling Downwards */}
+        <SwirlingDots count={2000} reverse={true} />
       </Canvas>
     </div>
   );

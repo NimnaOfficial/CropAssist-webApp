@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { User, Mail, Phone, Lock, MapPin, Sprout, Users, CreditCard, Eye, EyeOff, ArrowRight, Leaf, ChevronLeft, ChevronRight } from "lucide-react";
 import TypewriterText from "@/src/components/TypewriterText";
 
@@ -96,6 +97,7 @@ function FloatingLeaves() {
 }
 
 export default function SignupPage() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
@@ -277,9 +279,9 @@ export default function SignupPage() {
 
           {/* BOTTOM */}
           <div className="flex flex-col items-center gap-6 mb-6 lg:mb-12">
-            <Link href="/" className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm uppercase tracking-widest font-light">
-              <ChevronLeft size={16} strokeWidth={1.5} /> Return Home
-            </Link>
+            <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm uppercase tracking-widest font-light cursor-pointer">
+              <ChevronLeft size={16} strokeWidth={1.5} /> Go Back
+            </button>
             
             {/* FOOTER */}
             <div className="flex gap-6 text-[10px] text-white/30 uppercase tracking-widest">

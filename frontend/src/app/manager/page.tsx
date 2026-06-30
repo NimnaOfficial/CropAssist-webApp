@@ -7,7 +7,7 @@ import {
   Sun, Moon, LogOut, Search, Bell, Users, Sprout,
   ArrowUpRight, ArrowDownRight, User, Leaf, MapPin, Calendar,
   MessageSquare, Send, X, Filter, SortAsc, SortDesc, Eye,
-  Mail, BarChart3, Shield, Check, Plus, Trash2, Tag, CheckCircle, ChevronLeft, ChevronRight, Menu, PanelLeftClose, PanelLeftOpen
+  Mail, BarChart3, Shield, Check, Plus, Trash2, Tag, CheckCircle, ChevronLeft, ChevronRight, Menu, PanelLeftClose, PanelLeftOpen, Settings
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import DashboardBackground from "../../components/DashboardBackground";
@@ -163,6 +163,16 @@ export default function ManagerDashboard() {
     .filter(c => cropUserFilter === "all" || c.farmerId === cropUserFilter)
     .filter(c => c.name.toLowerCase().includes(cropSearch.toLowerCase()) || c.field.toLowerCase().includes(cropSearch.toLowerCase()) || c.tags?.some(t => t.toLowerCase().includes(cropSearch.toLowerCase())));
 
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [selectedDateFilter, setSelectedDateFilter] = useState("Today");
+  const [adminNotifications, setAdminNotifications] = useState([
+    { id: 1, text: "A new farmer requested approval." },
+    { id: 2, text: "System backup completed successfully." },
+    { id: 3, text: "High server load detected in region Asia-South." }
+  ]);
+
+  const dismissNotification = (id: number) => setAdminNotifications(prev => prev.filter(n => n.id !== id));
+
   /* ═══════ ACTIONS ═══════ */
   
   const handleAddUser = (e: React.FormEvent) => {
@@ -265,7 +275,7 @@ export default function ManagerDashboard() {
       <DashboardBackground />
 
       {/* ═══════════════════ TOP HEADER BAR ═══════════════════ */}
-      <header className="sticky top-0 z-40 bg-zinc-50/60 dark:bg-zinc-950/60 backdrop-blur-xl border-b border-zinc-200 dark:border-white/5 px-8 py-4 flex items-center justify-between transition-colors duration-500 relative z-20">
+      <header className="sticky top-0 z-40 bg-white/50 dark:bg-zinc-950/40 backdrop-blur-xl border-b border-zinc-200 dark:border-white/10 px-8 py-4 flex items-center justify-between transition-colors duration-500 relative">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
             <Sprout size={20} className="text-green-500" strokeWidth={1.5} />
@@ -316,16 +326,58 @@ export default function ManagerDashboard() {
               {resolvedTheme === "dark" ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
             </motion.button>
           )}
-          <button className="relative w-9 h-9 flex items-center justify-center border border-zinc-200 dark:border-white/10 hover:border-green-500/30 text-zinc-500 dark:text-white transition-colors bg-white/50 dark:bg-black/20 backdrop-blur-md rounded-full">
-            <Bell size={16} strokeWidth={1.5} />
-            <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-zinc-50 dark:border-zinc-950 rounded-full" />
-          </button>
-          <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-green-500 flex items-center justify-center text-xs text-white shadow-md rounded-full">
-            MG
+          <div className="relative">
+            <button onClick={() => setActiveDropdown(activeDropdown === 'notifications' ? null : 'notifications')} className="relative w-9 h-9 flex items-center justify-center border border-zinc-200 dark:border-white/10 hover:border-green-500/30 text-zinc-500 dark:text-white transition-colors bg-white/50 dark:bg-black/20 backdrop-blur-md rounded-full cursor-pointer">
+              <Bell size={16} strokeWidth={1.5} />
+              {adminNotifications.length > 0 && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-zinc-50 dark:border-zinc-950 rounded-full" />}
+            </button>
+            <AnimatePresence>
+              {activeDropdown === 'notifications' && (
+                <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-80 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-900 dark:text-white uppercase tracking-widest">Admin Alerts</span>
+                    <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full">{adminNotifications.length} New</span>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {adminNotifications.length > 0 ? adminNotifications.map(notif => (
+                      <div key={notif.id} className="flex gap-3 p-4 border-b border-zinc-100 dark:border-white/5 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+                        <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                          <Bell size={14} className="text-red-500" />
+                        </div>
+                        <div className="flex-1 min-w-0 flex items-center justify-between">
+                          <p className="text-xs text-zinc-800 dark:text-white/80 line-clamp-2">{notif.text}</p>
+                          <button onClick={(e) => { e.stopPropagation(); dismissNotification(notif.id); }} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-colors ml-2">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="p-8 text-center text-zinc-500 dark:text-white/40 text-xs">No new alerts</div>
+                    )}
+                  </div>
+                  <button onClick={() => { setAdminNotifications([]); setActiveDropdown(null); }} className="w-full py-3 text-[10px] text-zinc-500 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors uppercase tracking-widest text-center border-t border-zinc-200 dark:border-white/10">Clear All</button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          <Link href="/login" className="flex items-center gap-2 text-xs text-red-500 hover:text-red-600 dark:text-red-400/60 dark:hover:text-red-400 transition-colors ml-2">
-            <LogOut size={16} strokeWidth={1.5} />
-          </Link>
+
+          <div className="relative">
+            <button onClick={() => setActiveDropdown(activeDropdown === 'profile' ? null : 'profile')} className="w-9 h-9 bg-gradient-to-br from-red-500 to-green-500 flex items-center justify-center text-xs text-white shadow-md rounded-full hover:scale-105 transition-transform cursor-pointer">
+              MG
+            </button>
+            <AnimatePresence>
+              {activeDropdown === 'profile' && (
+                <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-56 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-3xl shadow-2xl py-2 z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-zinc-200 dark:border-white/10 mb-2">
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-white">Admin Manager</p>
+                    <p className="text-[10px] text-zinc-500 dark:text-white/50 truncate">admin@farmhub.com</p>
+                  </div>
+                  <button onClick={() => { setActiveDropdown(null); setTheme(resolvedTheme === "dark" ? "light" : "dark"); }} className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-3 text-zinc-600 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors"><Settings size={14}/> Toggle Theme</button>
+                  <Link href="/login" className="w-full text-left px-4 py-2.5 mt-2 text-xs flex items-center gap-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors border-t border-zinc-200 dark:border-white/10"><LogOut size={14}/> Log Out</Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </header>
 
@@ -338,9 +390,20 @@ export default function ManagerDashboard() {
               <h1 className="text-3xl font-gelasio tracking-wide text-zinc-900 dark:text-white">Manager Dashboard</h1>
               <p className="text-xs text-zinc-500 dark:text-white/40 mt-1 uppercase tracking-widest">Agricultural Enterprise Management</p>
             </div>
-            <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-white/30">
-              <Calendar size={14} strokeWidth={1.5} />
-              <span>Today</span>
+            <div className="relative z-20">
+              <button onClick={() => setActiveDropdown(activeDropdown === 'date' ? null : 'date')} className="flex items-center gap-3 px-4 py-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors group cursor-pointer border border-transparent hover:border-zinc-300 dark:hover:border-white/20">
+                <Calendar size={14} className="text-zinc-500 dark:text-white/40 group-hover:text-green-500 transition-colors" strokeWidth={1.5} />
+                <span className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{selectedDateFilter}</span>
+              </button>
+              <AnimatePresence>
+                {activeDropdown === 'date' && (
+                  <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-48 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                    {["Today", "Yesterday", "Last 7 Days", "This Month", "This Year"].map(t => (
+                      <button key={t} onClick={() => { setSelectedDateFilter(t); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-xs ${selectedDateFilter === t ? 'text-green-500 bg-zinc-100 dark:bg-white/5' : 'text-zinc-600 dark:text-white/70'} hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors`}>{t}</button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -354,7 +417,7 @@ export default function ManagerDashboard() {
                   const Icon = stat.icon;
                   return (
                     <motion.div key={i} custom={i} initial="hidden" animate="visible" variants={fadeIn}
-                      className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-6 hover:border-green-500/30 transition-all duration-300 group shadow-sm dark:shadow-none"
+                      className="bg-white/70 dark:bg-[#0c0c0e]/70 backdrop-blur-xl border border-zinc-200/50 dark:border-white/10 p-6 rounded-3xl hover:border-green-500/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)] transition-all duration-500 group shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
                     >
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest">{stat.label}</span>
@@ -369,7 +432,7 @@ export default function ManagerDashboard() {
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                <motion.div custom={4} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-6 shadow-sm dark:shadow-none">
+                <motion.div custom={4} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/70 backdrop-blur-xl border border-zinc-200/50 dark:border-white/10 p-6 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.1)] transition-shadow duration-500">
                   <h3 className="text-sm font-gelasio mb-6 text-zinc-900 dark:text-white">Farmer Status</h3>
                   <div className="flex flex-col gap-4">
                     {[
@@ -390,7 +453,7 @@ export default function ManagerDashboard() {
                   </div>
                 </motion.div>
 
-                <motion.div custom={5} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-6 shadow-sm dark:shadow-none">
+                <motion.div custom={5} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/70 backdrop-blur-xl border border-zinc-200/50 dark:border-white/10 p-6 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.1)] transition-shadow duration-500">
                   <h3 className="text-sm font-gelasio mb-6 text-zinc-900 dark:text-white">Crop Health Overview</h3>
                   <div className="flex flex-col gap-3">
                     {allCrops.slice(0, 5).map((crop, i) => (
@@ -410,7 +473,7 @@ export default function ManagerDashboard() {
                   </div>
                 </motion.div>
 
-                <motion.div custom={6} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-6 shadow-sm dark:shadow-none">
+                <motion.div custom={6} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/70 backdrop-blur-xl border border-zinc-200/50 dark:border-white/10 p-6 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.1)] transition-shadow duration-500">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-sm font-gelasio text-zinc-900 dark:text-white">Recent Messages</h3>
                     <button onClick={() => setActiveTab("messages")} className="text-[10px] text-green-500 hover:text-green-600 transition-colors uppercase tracking-widest">View All</button>
@@ -462,7 +525,7 @@ export default function ManagerDashboard() {
                 </button>
               </div>
 
-              <div className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 shadow-sm dark:shadow-none overflow-hidden">
+              <div className="bg-white/70 dark:bg-[#0c0c0e]/70 backdrop-blur-xl border border-zinc-200/50 dark:border-white/10 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] overflow-hidden">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
@@ -525,7 +588,7 @@ export default function ManagerDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredCrops.map((crop, i) => (
-                  <motion.div key={crop.id} custom={i} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-6 shadow-sm dark:shadow-none flex flex-col justify-between">
+                  <motion.div key={crop.id} custom={i} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/70 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 p-6 rounded-3xl hover:border-green-500/30 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -654,8 +717,8 @@ export default function ManagerDashboard() {
       {/* ════════ ADD USER MODAL ════════ */}
       <AnimatePresence>
         {isAddUserOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-zinc-900/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 w-full max-w-md shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-zinc-900/40 dark:bg-black/60 backdrop-blur-xl flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }} className="bg-white/70 dark:bg-[#0c0c0e]/70 backdrop-blur-xl border border-zinc-200 dark:border-white/10 w-full max-w-md rounded-3xl shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-gelasio text-zinc-900 dark:text-white">Add New Farmer</h3>
                 <button onClick={() => setIsAddUserOpen(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><X size={16} /></button>
@@ -696,8 +759,8 @@ export default function ManagerDashboard() {
       {/* ════════ FARMER DETAIL MODAL (Manage Status & Delete) ════════ */}
       <AnimatePresence>
         {selectedFarmer && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-zinc-900/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-zinc-900/40 dark:bg-black/60 backdrop-blur-xl flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white/70 dark:bg-[#0c0c0e]/70 backdrop-blur-xl border border-zinc-200 dark:border-white/10 w-full max-w-lg rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
               
               <div className="sticky top-0 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-white/5 px-6 py-4 flex items-center justify-between z-10">
                 <div className="flex items-center gap-3">

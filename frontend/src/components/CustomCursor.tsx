@@ -127,66 +127,37 @@ export default function CropCursor() {
         return true;
       });
 
-      // ─── OUTER RING ───
+      // ─── MINIMALIST LEAF CURSOR ───
       ctx.save();
-      ctx.strokeStyle = hover ? "rgba(34, 197, 94, 0.7)" : "rgba(34, 197, 94, 0.35)";
-      ctx.lineWidth = hover ? 2 : 1.5;
-      ctx.beginPath();
-      ctx.arc(ring.current.x, ring.current.y, ringSize, 0, Math.PI * 2);
-      ctx.stroke();
+      const cx = ring.current.x;
+      const cy = ring.current.y;
 
-      // Glow effect on hover
       if (hover) {
-        ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
-        ctx.shadowBlur = 20;
-        ctx.strokeStyle = "rgba(34, 197, 94, 0.2)";
-        ctx.lineWidth = 1;
+        // On hover: larger glowing dot
+        ctx.shadowColor = "rgba(34, 197, 94, 0.8)";
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = "rgba(34, 197, 94, 1)";
         ctx.beginPath();
-        ctx.arc(ring.current.x, ring.current.y, ringSize + 4, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      // ─── CENTER CROSSHAIR SEED ───
-      ctx.save();
-      const cx = mouse.current.x;
-      const cy = mouse.current.y;
-
-      if (hover) {
-        // On hover: pulsing filled circle
-        ctx.fillStyle = "rgba(34, 197, 94, 0.9)";
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Tiny glowing leaf tip
+        ctx.beginPath();
+        ctx.ellipse(cx + 4, cy - 4, 5, 2.5, -Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Normal: crisp green dot with a subtle leaf
+        ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = "rgba(34, 197, 94, 1)";
         ctx.beginPath();
         ctx.arc(cx, cy, 4, 0, Math.PI * 2);
         ctx.fill();
-      } else {
-        // Normal: tiny crosshair with a dot
-        ctx.fillStyle = "rgba(34, 197, 94, 1)";
-        ctx.beginPath();
-        ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
-        ctx.fill();
 
-        // Crosshair lines
-        ctx.strokeStyle = "rgba(34, 197, 94, 0.5)";
-        ctx.lineWidth = 1;
-        const gap = 5;
-        const len = 8;
-        // Top
-        ctx.beginPath(); ctx.moveTo(cx, cy - gap); ctx.lineTo(cx, cy - gap - len); ctx.stroke();
-        // Bottom — a tiny stem
-        ctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(cx, cy + gap); ctx.lineTo(cx, cy + gap + len + 2); ctx.stroke();
-        // Left
-        ctx.strokeStyle = "rgba(34, 197, 94, 0.5)";
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(cx - gap, cy); ctx.lineTo(cx - gap - len, cy); ctx.stroke();
-        // Right
-        ctx.beginPath(); ctx.moveTo(cx + gap, cy); ctx.lineTo(cx + gap + len, cy); ctx.stroke();
-
-        // Tiny leaf on top-right
-        ctx.fillStyle = "rgba(34, 197, 94, 0.6)";
+        // Tiny leaf sprout
+        ctx.fillStyle = "rgba(34, 197, 94, 0.8)";
         ctx.beginPath();
-        ctx.ellipse(cx + 3, cy - gap - len - 2, 3, 1.5, -0.8, 0, Math.PI * 2);
+        ctx.ellipse(cx + 3, cy - 3, 4, 2, -Math.PI / 4, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
