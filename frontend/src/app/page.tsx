@@ -76,7 +76,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="w-full bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-50 overflow-x-hidden">
+    <div id="landing-page" className="w-full bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-50 overflow-x-hidden">
       <Navbar />
 
       {/* ════════════════════ HERO SECTION ════════════════════ */}
@@ -90,7 +90,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 1.8, ease: "easeInOut" }}
-            className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat bg-fixed"
+            className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat bg-fixed will-change-transform"
             style={{ backgroundImage: `url('${backgrounds[currentBg]}')` }}
           />
         </AnimatePresence>
@@ -99,7 +99,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-black/30 dark:bg-black/50 z-[1]" />
 
         {/* LEFT ULTRA GLASSMORPHISM OVERLAY */}
-        <div className="absolute top-0 left-0 w-full lg:w-[55%] h-full backdrop-blur-[80px] bg-white/40 dark:bg-zinc-950/60 z-10" />
+        <div className="absolute top-0 left-0 w-full lg:w-[55%] h-full bg-white/90 dark:bg-zinc-950/90 z-10 will-change-transform" />
 
         {/* HERO CONTENT */}
         <div className="absolute inset-0 z-30 flex flex-col justify-center pointer-events-none">
@@ -206,7 +206,7 @@ export default function LandingPage() {
         </div>
 
         {/* BOTTOM RIGHT CAROUSEL CONTROLS */}
-        <div className="absolute bottom-0 right-0 lg:right-16 flex z-40 backdrop-blur-md bg-white/10 dark:bg-black/20">
+        <div className="absolute bottom-0 right-0 lg:right-16 flex z-40 bg-zinc-100/95 dark:bg-black/95">
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={prevBg}
@@ -360,8 +360,9 @@ export default function LandingPage() {
               key={index}
               variants={staggerItem}
               whileHover={{ y: -12, scale: 1.02 }}
-              className="backdrop-blur-xl bg-white/70 dark:bg-black/60 p-14 border border-zinc-200/80 dark:border-white/10 transition-all duration-500 hover:border-yellow-500/50 dark:hover:border-yellow-500/30 group relative overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_50px_rgba(234,179,8,0.15)] animate-pulse-glow"
+              className="bg-white dark:bg-zinc-900 p-14 border border-zinc-200/80 dark:border-white/10 transition-all duration-500 hover:border-yellow-500/50 dark:hover:border-yellow-500/30 group relative overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_50px_rgba(234,179,8,0.15)] animate-pulse-glow"
             >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-green-500/5 to-transparent rounded-bl-full" />
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-green-500 to-yellow-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-700 ease-out" />
               <div className="w-20 h-20 border border-zinc-300 dark:border-white/20 flex items-center justify-center text-zinc-400 group-hover:text-yellow-500 group-hover:border-yellow-500 transition-all duration-500 mb-10 shadow-lg backdrop-blur-md bg-white/50 dark:bg-black/30">
                 {service.icon}
@@ -430,22 +431,22 @@ export default function LandingPage() {
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="flex-1"
           >
-            <form onSubmit={onSubmit} className="flex flex-col gap-8 relative z-10 backdrop-blur-3xl bg-white/50 dark:bg-zinc-950/50 p-12 border border-zinc-200/50 dark:border-white/10 shadow-2xl">
+            <form onSubmit={onSubmit} className="flex flex-col gap-8 relative z-10 bg-white dark:bg-zinc-950 p-12 border border-zinc-200/50 dark:border-white/10 shadow-2xl will-change-transform">
               <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-yellow-400 to-green-600" />
 
               <div className="flex flex-col gap-3">
                 <label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-2">Full Name</label>
-                <input id="name" name="name" type="text" required placeholder="John Doe" className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-yellow-500 focus:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 font-sans" />
+                <input id="name" name="name" type="text" required placeholder="John Doe" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-yellow-500 focus:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 font-sans" />
               </div>
 
               <div className="flex flex-col gap-3">
                 <label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-2">Email Address</label>
-                <input id="email" name="email" type="email" required placeholder="john@enterprise.com" className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-yellow-500 focus:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 font-sans" />
+                <input id="email" name="email" type="email" required placeholder="john@enterprise.com" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-yellow-500 focus:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 font-sans" />
               </div>
 
               <div className="flex flex-col gap-3">
                 <label htmlFor="message" className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-2">Message</label>
-                <textarea id="message" name="message" required placeholder="How can we help?" rows={5} className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-yellow-500 focus:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 resize-none font-sans" />
+                <textarea id="message" name="message" required placeholder="How can we help?" rows={5} className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 px-8 py-5 focus:outline-none focus:border-yellow-500 focus:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 resize-none font-sans" />
               </div>
 
               <motion.button

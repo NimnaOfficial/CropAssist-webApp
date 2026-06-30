@@ -2,9 +2,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============ ULTRA SMOOTH SCROLLING ============ */
-html {
-  scroll-behavior: smooth;
-}
+/* Lenis handles smooth scrolling; CSS smooth scroll causes conflicts */
 
 /* Lenis-style smooth scroll feel for all browsers */
 html, body {

@@ -5,7 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 function FloatingPollen() {
-  const count = 80;
+  const count = 20;
   const mesh = useRef<THREE.InstancedMesh>(null);
   
   const particles = useMemo(() => {
