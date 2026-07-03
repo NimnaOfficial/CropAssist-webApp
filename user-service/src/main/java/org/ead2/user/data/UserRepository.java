@@ -1,7 +1,9 @@
 package org.ead2.user.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends JpaRepository<User,Long> {
 
@@ -13,4 +15,8 @@ public interface UserRepository extends JpaRepository<User,Long> {
 
     @Query("select u from User u where u.fullName=?1")
     User existsByFullName(String fullName);
+
+    @Modifying
+    @Query("UPDATE User u SET u.status = :status WHERE u.id = :userId")
+    int updateUserStatus(@Param("userId") Long userId, @Param("status") String status);
 }
