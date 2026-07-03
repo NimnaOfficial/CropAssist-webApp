@@ -15,14 +15,14 @@ public class User {
     @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "password_hash")
-    private String passwordHash;
+    @Column(name = "email")
+    private String email;
 
     @Column(name = "nic")
     private String nic;
 
-    @Column(name = "email")
-    private String email;
+    @Column(name = "password_hash")
+    private String passwordHash;
 
     @Column(name = "farming_type")
     private String farmingType;
@@ -39,11 +39,11 @@ public class User {
     public User() {
     }
 
-    public User(Long id,String nic,String email, String fullName, String passwordHash, String farmingType, Integer teamSize, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public User(Long id, String fullName, String email, String nic, String passwordHash, String farmingType, Integer teamSize, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
-        this.nic = nic;
-        this.email = email;
         this.fullName = fullName;
+        this.email = email;
+        this.nic = nic;
         this.passwordHash = passwordHash;
         this.farmingType = farmingType;
         this.teamSize = teamSize;
@@ -59,12 +59,12 @@ public class User {
         this.id = id;
     }
 
-    public String getNic() {
-        return nic;
+    public String getFullName() {
+        return fullName;
     }
 
-    public void setNic(String nic) {
-        this.nic = nic;
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public String getEmail() {
@@ -75,12 +75,12 @@ public class User {
         this.email = email;
     }
 
-    public String getFullName() {
-        return fullName;
+    public String getNic() {
+        return nic;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+    public void setNic(String nic) {
+        this.nic = nic;
     }
 
     public String getPasswordHash() {
