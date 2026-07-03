@@ -17,6 +17,12 @@ public class UserController {
         this.userService = userService;
     }
 
+    @PostMapping(path = "/user")
+    public User createUser(@RequestBody User user) {
+        return userService.createUser(user);
+    }
+}
+
     //this is just
 
     @PostMapping(path = "/user")
