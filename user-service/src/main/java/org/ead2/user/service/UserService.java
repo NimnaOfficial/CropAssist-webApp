@@ -33,4 +33,8 @@ public class UserService {
     public List<User> gettAllUsers() {
         return userRepository.findAll();
     }
+
+    public User getUserByNIC(String nic) {
+       return userRepository.existsByNIC();
+    }
 }

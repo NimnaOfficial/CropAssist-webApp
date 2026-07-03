@@ -36,5 +36,10 @@ public class UserController {
     public List<User> getAllUsers() {
         return userService.gettAllUsers();
     }
+
+    @GetMapping(path = "/users/{nic}")
+    public User getUserByNic(@PathVariable String nic) {
+        return userService.getUserByNIC(nic);
+    }
 }
 
