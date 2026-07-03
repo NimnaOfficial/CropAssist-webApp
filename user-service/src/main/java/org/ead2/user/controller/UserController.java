@@ -2,10 +2,7 @@ package org.ead2.user.controller;
 
 import org.ead2.user.data.User;
 import org.ead2.user.service.UserService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequestMapping(path = "/Api")
 @RestController
@@ -21,12 +18,10 @@ public class UserController {
     public User createUser(@RequestBody User user) {
         return userService.createUser(user);
     }
-}
 
-    //this is just
-
-    @PostMapping(path = "/user")
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    @PutMapping(path = "/user")
+    public User updateUser(@RequestBody User user) {
+        return userService.updateUser(user);
     }
 }
+
