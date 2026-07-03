@@ -7,6 +7,10 @@ import java.time.LocalDateTime;
 @Table(name = "users")
 public class User {
 
+    public enum Status {
+        PENDING, ACTIVE, INACTIVE, SUSPENDED
+    }
+
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +34,10 @@ public class User {
     @Column(name = "team_size")
     private Integer teamSize;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private Status status;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -39,7 +47,7 @@ public class User {
     public User() {
     }
 
-    public User(Long id, String fullName, String email, String nic, String passwordHash, String farmingType, Integer teamSize, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public User(Long id, String fullName, String email, String nic, String passwordHash, String farmingType, Integer teamSize, Status status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
@@ -47,6 +55,7 @@ public class User {
         this.passwordHash = passwordHash;
         this.farmingType = farmingType;
         this.teamSize = teamSize;
+        this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -105,6 +114,14 @@ public class User {
 
     public void setTeamSize(Integer teamSize) {
         this.teamSize = teamSize;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public LocalDateTime getCreatedAt() {
