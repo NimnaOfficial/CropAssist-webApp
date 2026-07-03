@@ -21,6 +21,9 @@ public class User {
     @Column(name = "nic")
     private String nic;
 
+    @Column(name = "email")
+    private String email;
+
     @Column(name = "farming_type")
     private String farmingType;
 
@@ -36,9 +39,10 @@ public class User {
     public User() {
     }
 
-    public User(Long id,String nic, String fullName, String passwordHash, String farmingType, Integer teamSize, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public User(Long id,String nic,String email, String fullName, String passwordHash, String farmingType, Integer teamSize, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.nic = nic;
+        this.email = email;
         this.fullName = fullName;
         this.passwordHash = passwordHash;
         this.farmingType = farmingType;
@@ -61,6 +65,14 @@ public class User {
 
     public void setNic(String nic) {
         this.nic = nic;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getFullName() {
