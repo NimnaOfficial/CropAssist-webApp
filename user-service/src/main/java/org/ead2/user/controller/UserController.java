@@ -4,7 +4,7 @@ import org.ead2.user.data.User;
 import org.ead2.user.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigInteger;
+
 import java.util.List;
 
 @RequestMapping(path = "/Api")
@@ -28,7 +28,7 @@ public class UserController {
     }
 
     @DeleteMapping(path = "/users/{id}")
-    public void deleteUser(@PathVariable BigInteger id) {
+    public void deleteUser(@PathVariable Long id) {
         userService.deleteUserById(id);
     }
 
@@ -37,12 +37,12 @@ public class UserController {
         return userService.gettAllUsers();
     }
 
-    @GetMapping(path = "/users/{nic}")
+    @GetMapping(path = "/users/nic/{nic}")
     public User getUserByNic(@PathVariable String nic) {
         return userService.getUserByNIC(nic);
     }
 
-    @GetMapping(path = "/users/{email}")
+    @GetMapping(path = "/users/email/{email}")
     public User getUserByEmail(@PathVariable String email) {
         return userService.getUserByEmail(email);
     }
