@@ -41,4 +41,8 @@ public class UserService {
     public User getUserByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
+
+    public User getUserByFullName(String fullName) {
+        return userRepository.existsByFullName(fullName);
+    }
 }

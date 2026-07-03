@@ -8,6 +8,9 @@ public interface UserRepository extends JpaRepository<User,Long> {
     @Query("select u from User u where u.nic=?1")
     User existsByNIC(String nic);
 
-    @Query("select e from User e where e.email=?1")
+    @Query("select u from User u where u.email=?1")
     User existsByEmail(String email);
+
+    @Query("select u from User u where u.fullName=?1")
+    User existsByFullName(String fullName);
 }
