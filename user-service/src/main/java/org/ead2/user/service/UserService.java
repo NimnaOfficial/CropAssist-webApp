@@ -35,6 +35,6 @@ public class UserService {
     }
 
     public User getUserByNIC(String nic) {
-       return userRepository.existsByNIC();
+       return userRepository.existsByNIC(nic);
     }
 }
