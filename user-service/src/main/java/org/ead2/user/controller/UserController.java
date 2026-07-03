@@ -2,23 +2,39 @@ package org.ead2.user.controller;
 
 import org.ead2.user.data.User;
 import org.ead2.user.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.math.BigInteger;
+import java.util.List;
 
-@RequestMapping(path="/Api")
+@RequestMapping(path = "/Api")
 @RestController
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @PostMapping(path= "/user")
-    public User createUser(@RequestBody User user){
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @PostMapping(path = "/users")
+    public User createUser(@RequestBody User user) {
         return userService.createUser(user);
     }
-//this is just
+
+    @PutMapping(path = "/users")
+    public User updateUser(@RequestBody User user) {
+        return userService.updateUser(user);
+    }
+
+    @DeleteMapping(path = "/users/{id}")
+    public void deleteUser(@PathVariable BigInteger id) {
+        userService.deleteUserById(id);
+    }
+
+    @GetMapping(path = "/users")
+    public List<User> getAllUsers() {
+        return userService.gettAllUsers();
+    }
 }
+
