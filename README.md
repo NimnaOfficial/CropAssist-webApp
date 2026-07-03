@@ -1,6 +1,6 @@
 # CropAssist-webApp
 
-### Accessed members: add name 👇🏻
+### Accessed membs: add name 👇🏻
 
 * **Nimna-branch:Nimna**
 * **huwin**
