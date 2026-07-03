@@ -41,5 +41,10 @@ public class UserController {
     public User getUserByNic(@PathVariable String nic) {
         return userService.getUserByNIC(nic);
     }
+
+    @GetMapping(path = "/users/{email}")
+    public User getUserByEmail(@PathVariable String email) {
+        return userService.getUserByEmail(email);
+    }
 }
 
