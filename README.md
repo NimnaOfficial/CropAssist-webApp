@@ -1,11 +1,13 @@
 # CropAssist-webApp
 
-### Accessed membs: add name 👇🏻
-<<<<<<< HEAD
+Accessed membs: add name 👇🏻
 =======
 
-* **Nimna**
->>>>>>> 8971262 (change branch)
+
+
+=======
+* **Nimna-branch:Nimna**
+
 * **huwin**
 * **Vidura**
 * **Dulan**
