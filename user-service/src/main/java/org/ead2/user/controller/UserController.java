@@ -21,5 +21,10 @@ public class UserController {
     public User createUser(@RequestBody User user) {
         return userService.createUser(user);
     }
-//this is just
+
+    @PutMapping(path = "/user")
+    public User updateUser(@RequestBody User user) {
+        return userService.updateUser(user);
+    }
 }
+
