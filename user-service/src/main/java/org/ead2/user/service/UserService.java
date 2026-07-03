@@ -1,7 +1,9 @@
 package org.ead2.user.service;
 
+import jakarta.transaction.Transactional;
 import org.ead2.user.data.User;
 import org.ead2.user.data.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
@@ -10,6 +12,7 @@ import java.util.List;
 @Service
 public class UserService {
 
+    @Autowired
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
@@ -44,5 +47,10 @@ public class UserService {
 
     public User getUserByFullName(String fullName) {
         return userRepository.existsByFullName(fullName);
+    }
+    @Transactional
+    public int updateUserStatus(Long userId, int status) {
+        return userRepository.updateUserStatus(userId, String.valueOf(status));
+
     }
 }
