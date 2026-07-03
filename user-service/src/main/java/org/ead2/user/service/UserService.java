@@ -37,4 +37,8 @@ public class UserService {
     public User getUserByNIC(String nic) {
        return userRepository.existsByNIC(nic);
     }
+
+    public User getUserByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
 }
