@@ -2,6 +2,7 @@
 
 ### Accessed membs: add name 👇🏻
 
+* **Nimna**
 * **huwin**
 * **Vidura**
 * **Dulan**
