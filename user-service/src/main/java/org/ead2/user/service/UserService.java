@@ -130,7 +130,7 @@ public class UserService {
      */
     public User login(String emailOrUsername
             , String rawPassword) {
-        this.userRepository.findByEmailOrUsername(emailOrUsername);
+
         if (this.userRepository.findByEmailOrUsername(emailOrUsername) == null) {
             throw new RuntimeException("User not found with identifier: " + emailOrUsername);
         }
