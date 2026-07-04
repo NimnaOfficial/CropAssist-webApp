@@ -178,6 +178,7 @@ export default function DashboardPage() {
     id: 1,
     firstName: "Loading...", lastName: "", username: "", email: "", phone: "+94 7X XXX XXXX",
     nic: "", age: "", address: "N/A", type: "N/A",
+    role: "", // ADDED ROLE HERE
     teamSize: "1", memberSince: "Recently", password: ""
   });
 
@@ -214,13 +215,15 @@ export default function DashboardPage() {
             type: user.farmingType || "N/A",
             role: user.role || "FARMER",
             teamSize: (user.teamSize || 1).toString(),
-            memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently"
+            memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
+            password: ""
           });
         } else {
           setProfileData({
             id: 0,
             firstName: "No", lastName: "Users Found", username: "N/A", email: "Add users in Manager Panel", phone: "N/A",
             nic: "N/A", age: "N/A", address: "N/A", type: "N/A",
+            role: "N/A",
             teamSize: "0", memberSince: "N/A", password: ""
           });
         }
@@ -231,6 +234,7 @@ export default function DashboardPage() {
           id: 0,
           firstName: "Database", lastName: "Offline", username: "N/A", email: "Start Backend", phone: "N/A",
           nic: "N/A", age: "N/A", address: "N/A", type: "N/A",
+          role: "N/A",
           teamSize: "0", memberSince: "N/A", password: ""
         });
       });

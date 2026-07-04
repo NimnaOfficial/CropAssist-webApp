@@ -53,6 +53,6 @@ public interface UserRepository extends JpaRepository<User,Long> {
      * @param identifier The string containing either the email or NIC.
      * @return The User object if a match is found.
      */
-    @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.nic = :identifier")
-    User findByEmailOrNic(@Param("identifier") String identifier);
+    @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.username = :identifier")
+    User findByEmailOrUsername(@Param("identifier") String identifier);
 }

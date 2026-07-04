@@ -85,7 +85,7 @@ export default function LoginPage() {
       const response = await fetch("http://localhost:8081/Api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailOrNic: formData.username, password: formData.password })
+        body: JSON.stringify({ emailOrUsername: formData.username, password: formData.password })
       });
 
       if (response.ok) {

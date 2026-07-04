@@ -118,7 +118,7 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {
             // Attempt to log the user in via the service layer
-            User user = userService.login(loginRequest.getEmailOrNic(), loginRequest.getPassword());
+            User user = userService.login(loginRequest.getEmailOrUsername(), loginRequest.getPassword());
             return ResponseEntity.ok(user); // Return 200 OK with the user data
         } catch (RuntimeException e) {
             // If login fails, return a 401 Unauthorized status with the error message

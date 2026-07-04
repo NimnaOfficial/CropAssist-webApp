@@ -1,13 +1,10 @@
 package org.ead2.user.service;
 
 import jakarta.transaction.Transactional;
-import org.ead2.user.config.AppConfig;
 import org.ead2.user.data.User;
 import org.ead2.user.data.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 
 import java.util.List;
 
@@ -126,15 +123,16 @@ public class UserService {
      * Authenticates a user login attempt.
      * It searches for the user by either Email OR NIC, then securely compares the provided raw password
      * with the stored BCrypt hash in the database.
-     * @param emailOrNic The user's email or NIC.
+     * @param emailOrUsername The user's email or NIC.
      * @param rawPassword The plain text password entered by the user.
      * @return The authenticated User object if successful.
      * @throws RuntimeException if the user is not found, password is incorrect, or account is not active.
      */
-    public User login(String emailOrNic, String rawPassword) {
-        User user = userRepository.findByEmailOrNic(emailOrNic);
+    public User login(String emailOrUsername
+            , String rawPassword) {
+        User user = userRepository.findByEmailOrUsername(emailOrUsername);
         if (user == null) {
-            throw new RuntimeException("User not found with identifier: " + emailOrNic);
+            throw new RuntimeException("User not found with identifier: " + emailOrUsername);
         }
         if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
             throw new RuntimeException("Invalid credentials");
