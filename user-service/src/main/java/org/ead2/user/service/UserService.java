@@ -1,9 +1,11 @@
 package org.ead2.user.service;
 
 import jakarta.transaction.Transactional;
+import org.ead2.user.config.AppConfig;
 import org.ead2.user.data.User;
 import org.ead2.user.data.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 
@@ -12,14 +14,21 @@ import java.util.List;
 @Service
 public class UserService {
 
-    @Autowired
+
     private final UserRepository userRepository;
 
-    public UserService(UserRepository userRepository) {
+
+    private final PasswordEncoder passwordEncoder ;   // <-- add this
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder ){
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+
     }
 
     public User createUser(User user) {
+        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+
         return userRepository.save(user);
     }
 
@@ -57,6 +66,21 @@ public class UserService {
         // Optionally fetch and return the updated user
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found after update"));
+    }
+
+    public User login(String emailOrNic, String rawPassword) {
+        User user = userRepository.findByEmailOrNic(emailOrNic);
+        if (user == null) {
+            throw new RuntimeException("User not found with identifier: " + emailOrNic);
+        }
+        if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+            throw new RuntimeException("Invalid credentials");
+        }
+        // Optional: check if status is active
+        if (user.getStatus() != User.Status.ACTIVE) {
+            throw new RuntimeException("Account is not active");
+        }
+        return user;   // or return a JWT token if you plan to use it
     }
 }
 
