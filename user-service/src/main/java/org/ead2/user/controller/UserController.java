@@ -1,7 +1,10 @@
 package org.ead2.user.controller;
 
 import org.ead2.user.data.User;
+import org.ead2.user.dto.LoginRequest;
 import org.ead2.user.service.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -52,9 +55,18 @@ public class UserController {
     public User getUserByFullName(@PathVariable String fullName) {
         return userService.getUserByFullName(fullName);
     }
-    @PutMapping("/users/{id}/status")
+    @PutMapping(path = "/users/{id}/status")
     public User updateUserStatus(@PathVariable Long id, @RequestParam User.Status status) {
         return userService.updateUserStatus(id, status);
+    }
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        try {
+            User user = userService.login(loginRequest.getEmailOrNic(), loginRequest.getPassword());
+            return ResponseEntity.ok(user);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
     }
 }
 
