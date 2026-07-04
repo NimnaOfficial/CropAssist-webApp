@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Sun, Moon, LogOut, Search, Bell, Users, Sprout,
   ArrowUpRight, ArrowDownRight, User, Leaf, MapPin, Calendar,
@@ -59,6 +60,7 @@ const navTabs: { label: string; id: TabId; icon: any }[] = [
 ];
 
 export default function ManagerDashboard() {
+  const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -95,7 +97,25 @@ export default function ManagerDashboard() {
   useEffect(() => { 
     setMounted(true);
     
-    // Fetch users from backend
+    // Check if the user is logged in and has the MANAGER role
+    const savedUserStr = localStorage.getItem("cropAssistUser");
+    if (savedUserStr) {
+      try {
+        const user = JSON.parse(savedUserStr);
+        if (user.role !== "MANAGER") {
+          router.push("/dashboard"); // Redirect FARMERS to their dashboard
+          return;
+        }
+      } catch (err) {
+        router.push("/login"); // Corrupted session, go to login
+        return;
+      }
+    } else {
+      router.push("/login"); // No session, go to login
+      return;
+    }
+    
+    // Fetch users from backend (as this is the Manager page, we need all users)
     fetch("http://localhost:8081/Api/users")
       .then(res => res.json())
       .then(data => {
@@ -104,8 +124,10 @@ export default function ManagerDashboard() {
             id: u.id,
             name: u.fullName || "Unknown",
             email: u.email || "",
+            username: u.username || "",
             phone: u.phone || "N/A",
             nic: u.nic || "",
+            age: (u.age || "").toString(),
             address: u.address || "N/A",
             role: u.role || "FARMER",
             memberSince: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
@@ -191,8 +213,10 @@ export default function ManagerDashboard() {
     e.preventDefault();
     const backendPayload = {
       fullName: newUser.name,
+      username: (newUser as any).username || newUser.name.split(" ")[0].toLowerCase(),
       email: newUser.email,
       nic: newUser.nic,
+      age: (newUser as any).age ? parseInt((newUser as any).age) : null,
       phone: newUser.phone,
       address: newUser.address,
       passwordHash: "pending_setup",

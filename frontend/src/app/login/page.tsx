@@ -69,14 +69,47 @@ export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ username: "", password: "" });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login submitted:", formData);
+    setError("");
+    setIsLoading(true);
+    
+    try {
+      // Send the login request to the backend
+      const response = await fetch("http://localhost:8081/Api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailOrUsername: formData.username, password: formData.password })
+      });
+
+      if (response.ok) {
+        // Parse the returned user object
+        const user = await response.json();
+        
+        // Save the authenticated user session to localStorage so other pages (like dashboard) can use it
+        localStorage.setItem("cropAssistUser", JSON.stringify(user));
+        
+        // Redirect based on the user's role
+        if (user.role === "MANAGER") {
+          router.push("/manager");
+        } else {
+          router.push("/dashboard");
+        }
+      } else {
+        setError("Invalid username/email or password.");
+      }
+    } catch (err) {
+      setError("Failed to connect to the server.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -149,6 +182,11 @@ export default function LoginPage() {
 
           {/* MIDDLE - FORM */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-8 my-auto py-12 lg:py-0">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 text-sm flex items-center justify-center">
+                {error}
+              </div>
+            )}
             <div className="relative group">
               <User size={18} className="absolute left-0 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-green-400 transition-colors" strokeWidth={1.5} />
               <input
@@ -195,12 +233,13 @@ export default function LoginPage() {
 
             <motion.button
               type="submit"
+              disabled={isLoading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full mt-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white py-4 flex items-center justify-center gap-3 transition-all duration-300 shadow-lg backdrop-blur-md group rounded-none"
+              className="w-full mt-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white py-4 flex items-center justify-center gap-3 transition-all duration-300 shadow-lg backdrop-blur-md group rounded-none disabled:opacity-50"
             >
-              <span className="tracking-[0.2em] uppercase text-sm font-normal">Sign In</span>
-              <ArrowRight size={18} strokeWidth={1.5} className="group-hover:translate-x-1 transition-transform" />
+              <span className="tracking-[0.2em] uppercase text-sm font-normal">{isLoading ? "Signing In..." : "Sign In"}</span>
+              {!isLoading && <ArrowRight size={18} strokeWidth={1.5} className="group-hover:translate-x-1 transition-transform" />}
             </motion.button>
           </form>
 
