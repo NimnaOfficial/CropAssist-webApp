@@ -21,10 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${outfit.variable} ${gelasio.variable} font-sans bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 transition-colors duration-500 cursor-none`}>
-        <style>{`
-          * { cursor: none !important; }
-        `}</style>
+      <body className={`${inter.variable} ${outfit.variable} ${gelasio.variable} font-sans bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 transition-colors duration-500 cursor-none`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <CropCursor />
           <SmoothScrolling>

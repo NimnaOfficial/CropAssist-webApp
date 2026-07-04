@@ -28,11 +28,20 @@ public class User {
     @Column(name = "password_hash")
     private String passwordHash;
 
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "address")
+    private String address;
+
     @Column(name = "farming_type")
     private String farmingType;
 
     @Column(name = "team_size")
     private Integer teamSize;
+
+    @Column(name = "role")
+    private String role;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -47,14 +56,17 @@ public class User {
     public User() {
     }
 
-    public User(Long id, String fullName, String email, String nic, String passwordHash, String farmingType, Integer teamSize, Status status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public User(Long id, String fullName, String email, String nic, String passwordHash, String phone, String address, String farmingType, Integer teamSize, String role, Status status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
         this.nic = nic;
         this.passwordHash = passwordHash;
+        this.phone = phone;
+        this.address = address;
         this.farmingType = farmingType;
         this.teamSize = teamSize;
+        this.role = role;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -100,6 +112,22 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     public String getFarmingType() {
         return farmingType;
     }
@@ -114,6 +142,14 @@ public class User {
 
     public void setTeamSize(Integer teamSize) {
         this.teamSize = teamSize;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public Status getStatus() {

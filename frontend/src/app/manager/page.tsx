@@ -46,46 +46,7 @@ interface ChatMessage {
   farmerId: number;
 }
 
-/* ═══════ MOCK DATA ═══════ */
-const mockFarmers: FarmerUser[] = [
-  {
-    id: 1, name: "John Farmer", email: "john@farmhub.com", phone: "+94 77 123 4567",
-    nic: "200012345678", address: "123 Green Valley, Kandy", memberSince: "Mar 2026", status: "active", teamSize: 12,
-    crops: [
-      { id: 101, name: "Rice (Samba)", field: "Field A-01", status: "Growing", health: 92, planted: "2026-03-15", harvest: "2026-08-20", area: "2.5 ha", tags: ["Premium Quality"] },
-      { id: 102, name: "Tea (Ceylon)", field: "Field B-03", status: "Harvesting", health: 88, planted: "2026-01-10", harvest: "2026-07-01", area: "1.8 ha", tags: ["Export"] },
-    ]
-  },
-  {
-    id: 2, name: "Nimali Perera", email: "nimali@greenfield.lk", phone: "+94 71 987 6543",
-    nic: "199856781234", address: "45 Paddy Lane, Anuradhapura", memberSince: "Jan 2026", status: "active", teamSize: 8,
-    crops: [
-      { id: 201, name: "Vegetables (Mixed)", field: "Field C-02", status: "Seedling", health: 95, planted: "2026-06-01", harvest: "2026-09-15", area: "0.6 ha", tags: ["Organic"] },
-      { id: 202, name: "Cinnamon", field: "Field D-01", status: "Growing", health: 78, planted: "2025-11-20", harvest: "2026-11-20", area: "3.2 ha" },
-      { id: 203, name: "Pepper", field: "Field D-02", status: "Mature", health: 90, planted: "2025-06-15", harvest: "2026-06-15", area: "1.4 ha" },
-    ]
-  },
-  {
-    id: 3, name: "Kamal Silva", email: "kamal@harvest.lk", phone: "+94 76 555 1234",
-    nic: "198734567890", address: "78 Coconut Road, Galle", memberSince: "Feb 2026", status: "active", teamSize: 15,
-    crops: [
-      { id: 301, name: "Coconut", field: "Field E-04", status: "Mature", health: 85, planted: "2023-05-10", harvest: "Ongoing", area: "4.0 ha" },
-    ]
-  },
-  {
-    id: 4, name: "Saman Bandara", email: "saman@crops.lk", phone: "+94 70 111 2222",
-    nic: "199512348765", address: "12 Hill Street, Nuwara Eliya", memberSince: "Apr 2026", status: "pending", teamSize: 3,
-    crops: []
-  },
-  {
-    id: 5, name: "Lakshmi Fernando", email: "lakshmi@farmnet.lk", phone: "+94 75 333 4444",
-    nic: "200187654321", address: "56 Riverside, Matale", memberSince: "May 2026", status: "inactive", teamSize: 6,
-    crops: [
-      { id: 501, name: "Rubber", field: "Field F-01", status: "Growing", health: 70, planted: "2025-09-01", harvest: "2027-09-01", area: "5.0 ha" },
-      { id: 502, name: "Clove", field: "Field F-02", status: "Seedling", health: 60, planted: "2026-05-01", harvest: "2027-05-01", area: "0.8 ha" },
-    ]
-  },
-];
+/* ═══════ NO MOCK FARMERS ═══════ */
 
 /* ═══════ NAV TABS ═══════ */
 type TabId = "overview" | "users" | "crops" | "messages";
@@ -104,7 +65,7 @@ export default function ManagerDashboard() {
   const [isNavOpen, setIsNavOpen] = useState(true);
   
   // Users state
-  const [farmers, setFarmers] = useState<FarmerUser[]>(mockFarmers);
+  const [farmers, setFarmers] = useState<FarmerUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"name" | "status" | "teamSize" | "crops">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -131,7 +92,33 @@ export default function ManagerDashboard() {
   const [newMsg, setNewMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { 
+    setMounted(true);
+    
+    // Fetch users from backend
+    fetch("http://localhost:8081/Api/users")
+      .then(res => res.json())
+      .then(data => {
+        if(Array.isArray(data)) {
+          const loadedFarmers: FarmerUser[] = data.map((u: any) => ({
+            id: u.id,
+            name: u.fullName || "Unknown",
+            email: u.email || "",
+            phone: u.phone || "N/A",
+            nic: u.nic || "",
+            address: u.address || "N/A",
+            role: u.role || "FARMER",
+            memberSince: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
+            status: u.status ? u.status.toLowerCase() as FarmerUser["status"] : "pending",
+            teamSize: u.teamSize || 1,
+            crops: []
+          }));
+          
+          setFarmers(loadedFarmers);
+        }
+      })
+      .catch(err => console.error("Failed to fetch backend users:", err));
+  }, []);
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [allMessages, chatFarmer]);
@@ -157,47 +144,104 @@ export default function ManagerDashboard() {
       return sortDir === "asc" ? cmp : -cmp;
     });
 
-  // All crops from all farmers
-  const allCrops = farmers.flatMap(f => f.crops.map(c => ({ ...c, farmerName: f.name, farmerId: f.id })));
-  const filteredCrops = allCrops
-    .filter(c => cropUserFilter === "all" || c.farmerId === cropUserFilter)
-    .filter(c => c.name.toLowerCase().includes(cropSearch.toLowerCase()) || c.field.toLowerCase().includes(cropSearch.toLowerCase()) || c.tags?.some(t => t.toLowerCase().includes(cropSearch.toLowerCase())));
-
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [selectedDateFilter, setSelectedDateFilter] = useState("Today");
+  const [selectedDateFilter, setSelectedDateFilter] = useState("All Time");
   const [adminNotifications, setAdminNotifications] = useState([
     { id: 1, text: "A new farmer requested approval." },
     { id: 2, text: "System backup completed successfully." },
     { id: 3, text: "High server load detected in region Asia-South." }
   ]);
 
+  const isDateInFilter = (dateString: string, filter: string) => {
+    if (!dateString) return true;
+    const date = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (filter === "Today") {
+      return date.toDateString() === today.toDateString();
+    } else if (filter === "Yesterday") {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      return date.toDateString() === yesterday.toDateString();
+    } else if (filter === "Last 7 Days") {
+      const last7 = new Date(today);
+      last7.setDate(last7.getDate() - 7);
+      return date >= last7;
+    } else if (filter === "This Month") {
+      return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+    } else if (filter === "This Year") {
+      return date.getFullYear() === today.getFullYear();
+    }
+    return true; // For any other value like "All Time"
+  };
+
+  // All crops from all farmers
+  const allCrops = farmers.flatMap(f => f.crops.map(c => ({ ...c, farmerName: f.name, farmerId: f.id })));
+  const filteredCrops = allCrops
+    .filter(c => isDateInFilter(c.date, selectedDateFilter))
+    .filter(c => cropUserFilter === "all" || c.farmerId === cropUserFilter)
+    .filter(c => c.name.toLowerCase().includes(cropSearch.toLowerCase()) || c.field.toLowerCase().includes(cropSearch.toLowerCase()) || c.tags?.some(t => t.toLowerCase().includes(cropSearch.toLowerCase())));
+
   const dismissNotification = (id: number) => setAdminNotifications(prev => prev.filter(n => n.id !== id));
 
   /* ═══════ ACTIONS ═══════ */
   
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    const createdUser: FarmerUser = {
-      id: Date.now(),
-      ...newUser,
-      status: "pending",
-      memberSince: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+    const backendPayload = {
+      fullName: newUser.name,
+      email: newUser.email,
+      nic: newUser.nic,
+      phone: newUser.phone,
+      address: newUser.address,
+      passwordHash: "pending_setup",
+      farmingType: "N/A",
       teamSize: 1,
-      crops: []
+      role: "FARMER",
+      status: "PENDING"
     };
-    setFarmers([createdUser, ...farmers]);
-    setIsAddUserOpen(false);
-    setNewUser({ name: "", email: "", phone: "", nic: "", address: "" });
+
+    try {
+      const res = await fetch("http://localhost:8081/Api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(backendPayload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const createdUser: FarmerUser = {
+          id: data.id,
+          ...newUser,
+          status: data.status ? data.status.toLowerCase() as FarmerUser["status"] : "pending",
+          memberSince: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          teamSize: data.teamSize || 1,
+          crops: []
+        };
+        setFarmers([createdUser, ...farmers]);
+        setIsAddUserOpen(false);
+        setNewUser({ name: "", email: "", phone: "", nic: "", address: "" });
+      }
+    } catch(err) {
+      console.error("Error creating user:", err);
+    }
   };
 
-  const updateUserStatus = (id: number, newStatus: FarmerUser["status"] | "deleted") => {
-    if (newStatus === "deleted") {
-      setFarmers(farmers.filter(f => f.id !== id));
-      if (selectedFarmer?.id === id) setSelectedFarmer(null);
-    } else {
-      const updated = farmers.map(f => f.id === id ? { ...f, status: newStatus as FarmerUser["status"] } : f);
-      setFarmers(updated);
-      if (selectedFarmer?.id === id) setSelectedFarmer({ ...selectedFarmer, status: newStatus as FarmerUser["status"] });
+  const updateUserStatus = async (id: number, newStatus: FarmerUser["status"] | "deleted") => {
+    try {
+      if (newStatus === "deleted") {
+        await fetch(`http://localhost:8081/Api/users/${id}`, { method: "DELETE" });
+        setFarmers(farmers.filter(f => f.id !== id));
+        if (selectedFarmer?.id === id) setSelectedFarmer(null);
+      } else {
+        const backendStatus = newStatus.toUpperCase();
+        await fetch(`http://localhost:8081/Api/users/${id}/status?status=${backendStatus}`, { method: "PUT" });
+        const updated = farmers.map(f => f.id === id ? { ...f, status: newStatus as FarmerUser["status"] } : f);
+        setFarmers(updated);
+        if (selectedFarmer?.id === id) setSelectedFarmer({ ...selectedFarmer, status: newStatus as FarmerUser["status"] });
+      }
+    } catch(err) {
+      console.error("Error updating status:", err);
     }
   };
 
@@ -398,7 +442,7 @@ export default function ManagerDashboard() {
               <AnimatePresence>
                 {activeDropdown === 'date' && (
                   <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-48 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50">
-                    {["Today", "Yesterday", "Last 7 Days", "This Month", "This Year"].map(t => (
+                    {["Today", "Yesterday", "Last 7 Days", "This Month", "This Year", "All Time"].map(t => (
                       <button key={t} onClick={() => { setSelectedDateFilter(t); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-xs ${selectedDateFilter === t ? 'text-green-500 bg-zinc-100 dark:bg-white/5' : 'text-zinc-600 dark:text-white/70'} hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors`}>{t}</button>
                     ))}
                   </motion.div>
