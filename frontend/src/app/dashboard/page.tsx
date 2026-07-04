@@ -18,11 +18,7 @@ const stats = [
   { label: "Active Fields", value: "14", change: "+2", up: true, icon: MapPin },
 ];
 
-const initialCrops = [
-  { id: 1, name: "Rice (Samba)", field: "Field A-01", status: "Growing", health: 92, planted: "2026-03-15", harvest: "2026-08-20", area: "2.5 ha" },
-  { id: 2, name: "Tea (Ceylon)", field: "Field B-03", status: "Harvesting", health: 88, planted: "2026-01-10", harvest: "2026-07-01", area: "1.8 ha" },
-  { id: 3, name: "Vegetables (Mixed)", field: "Field C-02", status: "Seedling", health: 95, planted: "2026-06-01", harvest: "2026-09-15", area: "0.6 ha" },
-];
+const initialCrops: any[] = [];
 
 const initialNotifications = [
   { id: 1, text: "Field A-01 soil moisture low", time: "Just now", icon: Droplets },
@@ -122,7 +118,9 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const dragControls = useDragControls();
-  
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [selectedDateFilter, setSelectedDateFilter] = useState("All Time");
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -133,7 +131,32 @@ export default function DashboardPage() {
   const [cropSortField, setCropSortField] = useState<"name" | "status" | "health">("name");
   const [cropSortDir, setCropSortDir] = useState<"asc" | "desc">("asc");
   
+  const isDateInFilter = (dateString: string, filter: string) => {
+    if (!dateString) return true;
+    const date = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (filter === "Today") {
+      return date.toDateString() === today.toDateString();
+    } else if (filter === "Yesterday") {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      return date.toDateString() === yesterday.toDateString();
+    } else if (filter === "Last 7 Days") {
+      const last7 = new Date(today);
+      last7.setDate(last7.getDate() - 7);
+      return date >= last7;
+    } else if (filter === "This Month") {
+      return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+    } else if (filter === "This Year") {
+      return date.getFullYear() === today.getFullYear();
+    }
+    return true; // For any other value like "All Time"
+  };
+
   const filteredSortedCrops = activeCrops
+    .filter(c => isDateInFilter(c.planted, selectedDateFilter))
     .filter(c => c.name.toLowerCase().includes(cropSearchTerm.toLowerCase()) || c.field.toLowerCase().includes(cropSearchTerm.toLowerCase()))
     .sort((a, b) => {
       let cmp = 0;
@@ -152,15 +175,14 @@ export default function DashboardPage() {
   // Profile Edit State
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
-    fullName: "John Farmer", email: "john@farmhub.com", phone: "+94 77 123 4567",
-    nic: "200012345678", address: "123 Green Valley, Kandy", type: "Rice, Tea, Vegetables",
-    teamSize: "12 Members", memberSince: "March 2026"
+    id: 1,
+    fullName: "Loading...", email: "", phone: "+94 7X XXX XXXX",
+    nic: "", address: "N/A", type: "N/A",
+    teamSize: "1", memberSince: "Recently"
   });
 
   // Chat State
   const [chatOpen, setChatOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [selectedDateFilter, setSelectedDateFilter] = useState("Today");
   const [donutKey, setDonutKey] = useState(0);
   const [chatMessages, setChatMessages] = useState([
     { id: 1, sender: "Manager", text: "Hello John, any updates on Field A-01? Let me know if you need assistance.", time: "09:00 AM" }
@@ -168,13 +190,81 @@ export default function DashboardPage() {
   const [newMsg, setNewMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { 
+    setMounted(true); 
+    // Fetch logged-in user profile
+    fetch("http://localhost:8081/Api/users")
+      .then(res => res.json())
+      .then(data => {
+        if(Array.isArray(data) && data.length > 0) {
+          // Choose a default active user for testing
+          const user = data.find((u: any) => u.status === 'ACTIVE') || data[0];
+          setProfileData({
+            id: user.id,
+            fullName: user.fullName || "Unknown",
+            email: user.email || "",
+            phone: user.phone || "N/A", 
+            nic: user.nic || "",
+            address: user.address || "N/A", 
+            type: user.farmingType || "N/A",
+            role: user.role || "FARMER",
+            teamSize: (user.teamSize || 1).toString(),
+            memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently"
+          });
+        } else {
+          setProfileData({
+            id: 0,
+            fullName: "No Users Found", email: "Add users in Manager Panel", phone: "N/A",
+            nic: "N/A", address: "N/A", type: "N/A",
+            teamSize: "0", memberSince: "N/A"
+          });
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch profile:", err);
+        setProfileData({
+          id: 0,
+          fullName: "Database Offline", email: "Start Backend", phone: "N/A",
+          nic: "N/A", address: "N/A", type: "N/A",
+          teamSize: "0", memberSince: "N/A"
+        });
+      });
+  }, []);
   
   useEffect(() => {
     if (chatOpen && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatMessages, chatOpen]);
+
+  const handleProfileSave = async () => {
+    if (isEditingProfile) {
+      // Save changes to backend
+      const payload = {
+        id: profileData.id,
+        fullName: profileData.fullName,
+        email: profileData.email,
+        nic: profileData.nic,
+        phone: profileData.phone,
+        address: profileData.address,
+        passwordHash: "pending_setup",
+        farmingType: profileData.type,
+        teamSize: parseInt(profileData.teamSize) || 1,
+        role: (profileData as any).role || "FARMER",
+        status: "ACTIVE"
+      };
+      try {
+        await fetch("http://localhost:8081/Api/users", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch(err) {
+        console.error("Failed to update profile", err);
+      }
+    }
+    setIsEditingProfile(!isEditingProfile);
+  };
 
   const openAddCrop = () => {
     setEditingCropId(null);
@@ -360,7 +450,7 @@ export default function DashboardPage() {
                 <AnimatePresence>
                   {activeDropdown === 'date' && (
                     <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-48 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50">
-                      {["Today", "Yesterday", "Last 7 Days", "This Month", "This Year"].map(t => (
+                      {["Today", "Yesterday", "Last 7 Days", "This Month", "This Year", "All Time"].map(t => (
                         <button key={t} onClick={() => {setSelectedDateFilter(t); setActiveDropdown(null);}} className={`w-full text-left px-4 py-2.5 text-xs ${selectedDateFilter === t ? 'text-green-500 bg-zinc-100 dark:bg-white/5' : 'text-zinc-600 dark:text-white/70'} hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors`}>{t}</button>
                       ))}
                     </motion.div>
@@ -574,7 +664,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <motion.button 
-                        onClick={() => setIsEditingProfile(!isEditingProfile)}
+                        onClick={handleProfileSave}
                         whileTap={{ scale: 0.95 }}
                         className={`flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-widest border transition-colors ${isEditingProfile ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20' : 'bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-white/50 border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20'}`}
                       >
