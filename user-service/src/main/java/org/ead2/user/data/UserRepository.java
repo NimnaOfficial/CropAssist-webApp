@@ -17,6 +17,6 @@ public interface UserRepository extends JpaRepository<User,Long> {
     User existsByFullName(String fullName);
 
     @Modifying
-    @Query("UPDATE User u SET u.status = :status WHERE u.id = :userId")
-    int updateUserStatus(@Param("userId") Long userId, @Param("status") String status);
+    @Query("UPDATE User u SET u.status = :status WHERE u.id = :id")
+    int updateUserStatus(@Param("id") Long id, @Param("status") User.Status status);
 }
