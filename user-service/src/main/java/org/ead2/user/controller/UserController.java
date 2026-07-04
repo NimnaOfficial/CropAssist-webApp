@@ -52,7 +52,7 @@ public class UserController {
         return userService.getUserByFullName(fullName);
     }
     @PutMapping("/users/{id}/status")
-    public User updateUserStatus(@PathVariable Long id, @RequestBody User.Status status) {
+    public User updateUserStatus(@PathVariable Long id, @RequestParam User.Status status) {
         return userService.updateUserStatus(id, status);
     }
 }
