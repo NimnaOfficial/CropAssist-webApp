@@ -49,8 +49,14 @@ public class UserService {
         return userRepository.existsByFullName(fullName);
     }
     @Transactional
-    public int updateUserStatus(Long userId, int status) {
-        return userRepository.updateUserStatus(userId, String.valueOf(status));
-
+    public User updateUserStatus(Long id, User.Status status) {
+        int updated = userRepository.updateUserStatus(id, status);
+        if (updated == 0) {
+            throw new RuntimeException("User not found with id: " + id);
+        }
+        // Optionally fetch and return the updated user
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found after update"));
     }
 }
+
