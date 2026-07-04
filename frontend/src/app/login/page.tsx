@@ -82,6 +82,7 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
+      // Send the login request to the backend
       const response = await fetch("http://localhost:8081/Api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -89,8 +90,13 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
+        // Parse the returned user object
         const user = await response.json();
-        // Redirect based on role
+        
+        // Save the authenticated user session to localStorage so other pages (like dashboard) can use it
+        localStorage.setItem("cropAssistUser", JSON.stringify(user));
+        
+        // Redirect based on the user's role
         if (user.role === "MANAGER") {
           router.push("/manager");
         } else {

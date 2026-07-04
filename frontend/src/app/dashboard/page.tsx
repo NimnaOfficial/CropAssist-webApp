@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard, Sprout, User, Search, Sun, Moon, Bell, LogOut,
   Wheat, ArrowUpRight, ArrowDownRight, Leaf, MapPin, Calendar, 
@@ -113,6 +114,7 @@ function DonutChart() {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [activeNav, setActiveNav] = useState("overview");
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -193,52 +195,46 @@ export default function DashboardPage() {
 
   useEffect(() => { 
     setMounted(true); 
-    // Fetch logged-in user profile
-    fetch("http://localhost:8081/Api/users")
-      .then(res => res.json())
-      .then(data => {
-        if(Array.isArray(data) && data.length > 0) {
-          // Choose a default active FARMER for testing (avoid admins)
-          const user = data.find((u: any) => u.status === 'ACTIVE' && u.role === 'FARMER') 
-                    || data.find((u: any) => u.status === 'ACTIVE') 
-                    || data[0];
-          setProfileData({
-            id: user.id,
-            firstName: user.fullName ? user.fullName.split(" ")[0] : "Unknown",
-            lastName: user.fullName && user.fullName.split(" ").length > 1 ? user.fullName.split(" ").slice(1).join(" ") : "",
-            username: user.username || "",
-            email: user.email || "",
-            phone: user.phone || "N/A", 
-            nic: user.nic || "",
-            age: (user.age || "").toString(),
-            address: user.address || "N/A", 
-            type: user.farmingType || "N/A",
-            role: user.role || "FARMER",
-            teamSize: (user.teamSize || 1).toString(),
-            memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
-            password: ""
-          });
-        } else {
-          setProfileData({
-            id: 0,
-            firstName: "No", lastName: "Users Found", username: "N/A", email: "Add users in Manager Panel", phone: "N/A",
-            nic: "N/A", age: "N/A", address: "N/A", type: "N/A",
-            role: "N/A",
-            teamSize: "0", memberSince: "N/A", password: ""
-          });
+    
+    // Attempt to retrieve the saved session from localStorage
+    const savedUserStr = localStorage.getItem("cropAssistUser");
+    
+    if (savedUserStr) {
+      try {
+        const user = JSON.parse(savedUserStr);
+        
+        // Ensure that a MANAGER cannot access the FARMER dashboard (optional security check)
+        if (user.role === "MANAGER") {
+          router.push("/manager");
+          return;
         }
-      })
-      .catch(err => {
-        console.error("Failed to fetch profile:", err);
+
+        // Map the database user object to the local profileData state
         setProfileData({
-          id: 0,
-          firstName: "Database", lastName: "Offline", username: "N/A", email: "Start Backend", phone: "N/A",
-          nic: "N/A", age: "N/A", address: "N/A", type: "N/A",
-          role: "N/A",
-          teamSize: "0", memberSince: "N/A", password: ""
+          id: user.id,
+          firstName: user.fullName ? user.fullName.split(" ")[0] : "Unknown",
+          lastName: user.fullName && user.fullName.split(" ").length > 1 ? user.fullName.split(" ").slice(1).join(" ") : "",
+          username: user.username || "",
+          email: user.email || "",
+          phone: user.phone || "N/A", 
+          nic: user.nic || "",
+          age: (user.age || "").toString(),
+          address: user.address || "N/A", 
+          type: user.farmingType || "N/A",
+          role: user.role || "FARMER",
+          teamSize: (user.teamSize || 1).toString(),
+          memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
+          password: ""
         });
-      });
-  }, []);
+      } catch (err) {
+        console.error("Failed to parse user session", err);
+        router.push("/login"); // Redirect to login if session is corrupted
+      }
+    } else {
+      // If there is no active session, immediately redirect the user to the login page
+      router.push("/login");
+    }
+  }, [router]);
   
   useEffect(() => {
     if (chatOpen && chatEndRef.current) {
