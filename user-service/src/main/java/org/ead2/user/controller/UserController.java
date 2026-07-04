@@ -59,6 +59,7 @@ public class UserController {
     public User updateUserStatus(@PathVariable Long id, @RequestParam User.Status status) {
         return userService.updateUserStatus(id, status);
     }
+    @CrossOrigin(origins = "*")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {

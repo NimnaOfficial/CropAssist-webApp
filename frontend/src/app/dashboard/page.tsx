@@ -176,9 +176,9 @@ export default function DashboardPage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
     id: 1,
-    fullName: "Loading...", email: "", phone: "+94 7X XXX XXXX",
-    nic: "", address: "N/A", type: "N/A",
-    teamSize: "1", memberSince: "Recently"
+    firstName: "Loading...", lastName: "", username: "", email: "", phone: "+94 7X XXX XXXX",
+    nic: "", age: "", address: "N/A", type: "N/A",
+    teamSize: "1", memberSince: "Recently", password: ""
   });
 
   // Chat State
@@ -197,14 +197,19 @@ export default function DashboardPage() {
       .then(res => res.json())
       .then(data => {
         if(Array.isArray(data) && data.length > 0) {
-          // Choose a default active user for testing
-          const user = data.find((u: any) => u.status === 'ACTIVE') || data[0];
+          // Choose a default active FARMER for testing (avoid admins)
+          const user = data.find((u: any) => u.status === 'ACTIVE' && u.role === 'FARMER') 
+                    || data.find((u: any) => u.status === 'ACTIVE') 
+                    || data[0];
           setProfileData({
             id: user.id,
-            fullName: user.fullName || "Unknown",
+            firstName: user.fullName ? user.fullName.split(" ")[0] : "Unknown",
+            lastName: user.fullName && user.fullName.split(" ").length > 1 ? user.fullName.split(" ").slice(1).join(" ") : "",
+            username: user.username || "",
             email: user.email || "",
             phone: user.phone || "N/A", 
             nic: user.nic || "",
+            age: (user.age || "").toString(),
             address: user.address || "N/A", 
             type: user.farmingType || "N/A",
             role: user.role || "FARMER",
@@ -214,9 +219,9 @@ export default function DashboardPage() {
         } else {
           setProfileData({
             id: 0,
-            fullName: "No Users Found", email: "Add users in Manager Panel", phone: "N/A",
-            nic: "N/A", address: "N/A", type: "N/A",
-            teamSize: "0", memberSince: "N/A"
+            firstName: "No", lastName: "Users Found", username: "N/A", email: "Add users in Manager Panel", phone: "N/A",
+            nic: "N/A", age: "N/A", address: "N/A", type: "N/A",
+            teamSize: "0", memberSince: "N/A", password: ""
           });
         }
       })
@@ -224,9 +229,9 @@ export default function DashboardPage() {
         console.error("Failed to fetch profile:", err);
         setProfileData({
           id: 0,
-          fullName: "Database Offline", email: "Start Backend", phone: "N/A",
-          nic: "N/A", address: "N/A", type: "N/A",
-          teamSize: "0", memberSince: "N/A"
+          firstName: "Database", lastName: "Offline", username: "N/A", email: "Start Backend", phone: "N/A",
+          nic: "N/A", age: "N/A", address: "N/A", type: "N/A",
+          teamSize: "0", memberSince: "N/A", password: ""
         });
       });
   }, []);
@@ -242,12 +247,14 @@ export default function DashboardPage() {
       // Save changes to backend
       const payload = {
         id: profileData.id,
-        fullName: profileData.fullName,
+        fullName: `${profileData.firstName} ${profileData.lastName}`.trim(),
+        username: profileData.username,
         email: profileData.email,
         nic: profileData.nic,
+        age: parseInt(profileData.age) || null,
         phone: profileData.phone,
         address: profileData.address,
-        passwordHash: "pending_setup",
+        passwordHash: profileData.password ? profileData.password : "pending_setup",
         farmingType: profileData.type,
         teamSize: parseInt(profileData.teamSize) || 1,
         role: (profileData as any).role || "FARMER",
@@ -657,9 +664,9 @@ export default function DashboardPage() {
                   <div className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-8 shadow-sm dark:shadow-none">
                     <div className="flex items-center justify-between mb-8">
                       <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-2xl text-white font-gelasio shadow-lg">JF</div>
+                        <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-2xl text-white font-gelasio shadow-lg">{profileData.firstName?.charAt(0) || "F"}{profileData.lastName?.charAt(0) || "U"}</div>
                         <div>
-                          <h3 className="text-xl font-gelasio text-zinc-900 dark:text-white">{profileData.fullName}</h3>
+                          <h3 className="text-xl font-gelasio text-zinc-900 dark:text-white">{profileData.firstName} {profileData.lastName}</h3>
                           <p className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest mt-1">Enterprise Account</p>
                         </div>
                       </div>
@@ -672,31 +679,94 @@ export default function DashboardPage() {
                       </motion.button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {[
-                        { key: "fullName", label: "Full Name", value: profileData.fullName },
-                        { key: "email", label: "Email", value: profileData.email },
-                        { key: "phone", label: "Phone", value: profileData.phone },
-                        { key: "nic", label: "NIC", value: profileData.nic },
-                        { key: "address", label: "Farm Address", value: profileData.address },
-                        { key: "type", label: "Farming Type", value: profileData.type },
-                        { key: "teamSize", label: "Team Size", value: profileData.teamSize },
-                        { key: "memberSince", label: "Member Since", value: profileData.memberSince, readOnly: true },
-                      ].map((field) => (
-                        <div key={field.key} className="border-b border-zinc-200 dark:border-white/5 pb-4">
-                          <p className="text-[10px] text-zinc-500 dark:text-white/30 uppercase tracking-widest mb-2">{field.label}</p>
-                          {isEditingProfile && !field.readOnly ? (
-                            <input 
-                              type="text"
-                              value={field.value}
-                              onChange={(e) => setProfileData({...profileData, [field.key]: e.target.value})}
-                              className="w-full bg-transparent border-b border-green-500/50 pb-1 outline-none text-sm text-zinc-900 dark:text-white font-gelasio"
-                            />
-                          ) : (
-                            <p className="text-sm text-zinc-900 dark:text-white/80 font-gelasio">{field.value}</p>
-                          )}
+                    <div className="flex flex-col gap-8">
+                      {/* SECTION 1: PERSONAL */}
+                      <motion.div custom={0} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }} className="border border-zinc-200/50 dark:border-white/5 p-6 bg-white/30 dark:bg-black/20">
+                        <h4 className="text-sm font-gelasio text-green-600 dark:text-green-400 mb-6 flex items-center gap-2 border-b border-zinc-200 dark:border-white/5 pb-2">
+                          <span className="w-5 h-5 bg-green-500/20 flex items-center justify-center text-[10px]">1</span> Personal Details
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {[
+                            { key: "firstName", label: "First Name", value: profileData.firstName },
+                            { key: "lastName", label: "Last Name", value: profileData.lastName },
+                            { key: "email", label: "Email Address", value: profileData.email },
+                            { key: "phone", label: "Phone Number", value: profileData.phone },
+                            { key: "age", label: "Age", value: profileData.age },
+                            { key: "nic", label: "NIC Number", value: profileData.nic },
+                          ].map((field) => (
+                            <div key={field.key} className="border-b border-zinc-200 dark:border-white/5 pb-3">
+                              <p className="text-[10px] text-zinc-500 dark:text-white/30 uppercase tracking-widest mb-2">{field.label}</p>
+                              {isEditingProfile ? (
+                                <input 
+                                  type="text"
+                                  value={field.value}
+                                  onChange={(e) => setProfileData({...profileData, [field.key]: e.target.value})}
+                                  className="w-full bg-transparent border-b border-green-500/50 pb-1 outline-none text-sm text-zinc-900 dark:text-white font-gelasio focus:border-green-400 transition-colors"
+                                />
+                              ) : (
+                                <p className="text-sm text-zinc-900 dark:text-white/80 font-gelasio">{field.value}</p>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </motion.div>
+
+                      {/* SECTION 2: FARM */}
+                      <motion.div custom={1} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }} className="border border-zinc-200/50 dark:border-white/5 p-6 bg-white/30 dark:bg-black/20">
+                        <h4 className="text-sm font-gelasio text-green-600 dark:text-green-400 mb-6 flex items-center gap-2 border-b border-zinc-200 dark:border-white/5 pb-2">
+                          <span className="w-5 h-5 bg-green-500/20 flex items-center justify-center text-[10px]">2</span> Farm Details
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {[
+                            { key: "address", label: "Farm Address", value: profileData.address },
+                            { key: "type", label: "Farming Type", value: profileData.type },
+                            { key: "teamSize", label: "Team Size", value: profileData.teamSize },
+                            { key: "memberSince", label: "Member Since", value: profileData.memberSince, readOnly: true },
+                          ].map((field) => (
+                            <div key={field.key} className="border-b border-zinc-200 dark:border-white/5 pb-3">
+                              <p className="text-[10px] text-zinc-500 dark:text-white/30 uppercase tracking-widest mb-2">{field.label}</p>
+                              {isEditingProfile && !field.readOnly ? (
+                                <input 
+                                  type="text"
+                                  value={field.value}
+                                  onChange={(e) => setProfileData({...profileData, [field.key]: e.target.value})}
+                                  className="w-full bg-transparent border-b border-green-500/50 pb-1 outline-none text-sm text-zinc-900 dark:text-white font-gelasio focus:border-green-400 transition-colors"
+                                />
+                              ) : (
+                                <p className="text-sm text-zinc-900 dark:text-white/80 font-gelasio">{field.value}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+
+                      {/* SECTION 3: SECURITY */}
+                      <motion.div custom={2} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }} className="border border-zinc-200/50 dark:border-white/5 p-6 bg-white/30 dark:bg-black/20">
+                        <h4 className="text-sm font-gelasio text-green-600 dark:text-green-400 mb-6 flex items-center gap-2 border-b border-zinc-200 dark:border-white/5 pb-2">
+                          <span className="w-5 h-5 bg-green-500/20 flex items-center justify-center text-[10px]">3</span> Security
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {[
+                            { key: "username", label: "Username", value: profileData.username },
+                            { key: "password", label: "Password", value: isEditingProfile ? profileData.password : "••••••••", type: isEditingProfile ? "text" : "password", placeholder: isEditingProfile ? "Enter new password..." : "" },
+                          ].map((field) => (
+                            <div key={field.key} className="border-b border-zinc-200 dark:border-white/5 pb-3">
+                              <p className="text-[10px] text-zinc-500 dark:text-white/30 uppercase tracking-widest mb-2">{field.label}</p>
+                              {isEditingProfile ? (
+                                <input 
+                                  type={field.type || "text"}
+                                  placeholder={field.placeholder}
+                                  value={field.value}
+                                  onChange={(e) => setProfileData({...profileData, [field.key]: e.target.value})}
+                                  className="w-full bg-transparent border-b border-green-500/50 pb-1 outline-none text-sm text-zinc-900 dark:text-white font-gelasio focus:border-green-400 transition-colors"
+                                />
+                              ) : (
+                                <p className="text-sm text-zinc-900 dark:text-white/80 font-gelasio">{field.value}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
                     </div>
                   </div>
                 </motion.div>

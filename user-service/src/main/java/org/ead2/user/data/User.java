@@ -19,6 +19,9 @@ public class User {
     @Column(name = "full_name")
     private String fullName;
 
+    @Column(name = "username")
+    private String username;
+
     @Column(name = "email")
     private String email;
 
@@ -33,6 +36,9 @@ public class User {
 
     @Column(name = "address")
     private String address;
+
+    @Column(name = "age")
+    private Integer age;
 
     @Column(name = "farming_type")
     private String farmingType;
@@ -56,14 +62,16 @@ public class User {
     public User() {
     }
 
-    public User(Long id, String fullName, String email, String nic, String passwordHash, String phone, String address, String farmingType, Integer teamSize, String role, Status status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public User(Long id, String fullName, String username, String email, String nic, String passwordHash, String phone, String address, Integer age, String farmingType, Integer teamSize, String role, Status status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.fullName = fullName;
+        this.username = username;
         this.email = email;
         this.nic = nic;
         this.passwordHash = passwordHash;
         this.phone = phone;
         this.address = address;
+        this.age = age;
         this.farmingType = farmingType;
         this.teamSize = teamSize;
         this.role = role;
@@ -86,6 +94,14 @@ public class User {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getEmail() {
@@ -126,6 +142,14 @@ public class User {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
     }
 
     public String getFarmingType() {

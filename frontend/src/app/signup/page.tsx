@@ -101,17 +101,58 @@ export default function SignupPage() {
   const [step, setStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
     if (step < signUpSteps.length - 1) {
       setStep(step + 1);
     } else {
-      console.log("Signup submitted:", formData);
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match!");
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        const payload = {
+          fullName: `${formData.firstName || ''} ${formData.lastName || ''}`.trim(),
+          email: formData.email,
+          phone: formData.phone,
+          nic: formData.nic,
+          age: parseInt(formData.age) || null,
+          address: formData.farmAddress,
+          farmingType: formData.farming,
+          teamSize: parseInt(formData.members) || 1,
+          username: formData.username,
+          passwordHash: formData.password, 
+          role: "FARMER",
+          status: "ACTIVE"
+        };
+
+        const response = await fetch("http://localhost:8081/Api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          router.push("/login");
+        } else {
+          setError("Failed to create account. Email or NIC might already exist.");
+        }
+      } catch (err) {
+        setError("Failed to connect to the server.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -206,6 +247,11 @@ export default function SignupPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 text-sm flex items-center justify-center -mt-2">
+                  {error}
+                </div>
+              )}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}
@@ -260,18 +306,19 @@ export default function SignupPage() {
 
                 <motion.button
                   type="submit"
+                  disabled={isLoading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex-1 h-[56px] bg-white/5 hover:bg-white/10 border border-white/20 rounded-none text-white flex items-center justify-center gap-3 transition-all duration-300 shadow-lg backdrop-blur-md group"
+                  className="flex-1 h-[56px] bg-white/5 hover:bg-white/10 border border-white/20 rounded-none text-white flex items-center justify-center gap-3 transition-all duration-300 shadow-lg backdrop-blur-md group disabled:opacity-50"
                 >
                   <span className="tracking-[0.2em] uppercase text-sm font-normal">
-                    {step === signUpSteps.length - 1 ? "Create Account" : "Next Step"}
+                    {isLoading ? "Processing..." : (step === signUpSteps.length - 1 ? "Create Account" : "Next Step")}
                   </span>
-                  {step === signUpSteps.length - 1 ? (
+                  {!isLoading && (step === signUpSteps.length - 1 ? (
                     <ArrowRight size={18} strokeWidth={1.5} className="group-hover:translate-x-1 transition-transform" />
                   ) : (
                     <ChevronRight size={18} strokeWidth={1.5} className="group-hover:translate-x-1 transition-transform" />
-                  )}
+                  ))}
                 </motion.button>
               </div>
             </form>

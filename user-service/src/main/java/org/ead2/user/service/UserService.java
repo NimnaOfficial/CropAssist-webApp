@@ -33,6 +33,9 @@ public class UserService {
     }
 
     public User updateUser(User user) {
+        if (user.getPasswordHash() != null && !user.getPasswordHash().startsWith("$2a$") && !user.getPasswordHash().equals("pending_setup")) {
+            user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        }
         return userRepository.save(user);
     }
 

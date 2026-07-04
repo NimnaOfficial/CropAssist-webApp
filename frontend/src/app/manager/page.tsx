@@ -104,8 +104,10 @@ export default function ManagerDashboard() {
             id: u.id,
             name: u.fullName || "Unknown",
             email: u.email || "",
+            username: u.username || "",
             phone: u.phone || "N/A",
             nic: u.nic || "",
+            age: (u.age || "").toString(),
             address: u.address || "N/A",
             role: u.role || "FARMER",
             memberSince: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
@@ -191,8 +193,10 @@ export default function ManagerDashboard() {
     e.preventDefault();
     const backendPayload = {
       fullName: newUser.name,
+      username: (newUser as any).username || newUser.name.split(" ")[0].toLowerCase(),
       email: newUser.email,
       nic: newUser.nic,
+      age: (newUser as any).age ? parseInt((newUser as any).age) : null,
       phone: newUser.phone,
       address: newUser.address,
       passwordHash: "pending_setup",
