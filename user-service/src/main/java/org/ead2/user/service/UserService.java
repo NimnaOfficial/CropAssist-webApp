@@ -130,17 +130,17 @@ public class UserService {
      */
     public User login(String emailOrUsername
             , String rawPassword) {
-        User user = userRepository.findByEmailOrUsername(emailOrUsername);
-        if (user == null) {
+
+        if (this.userRepository.findByEmailOrUsername(emailOrUsername) == null) {
             throw new RuntimeException("User not found with identifier: " + emailOrUsername);
         }
-        if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+        if (!passwordEncoder.matches(rawPassword, this.userRepository.findByEmailOrUsername(emailOrUsername).getPasswordHash())) {
             throw new RuntimeException("Invalid credentials");
         }
         // Optional: check if status is active
-        if (user.getStatus() != User.Status.ACTIVE) {
+        if (this.userRepository.findByEmailOrUsername(emailOrUsername).getStatus() != User.Status.ACTIVE) {
             throw new RuntimeException("Account is not active");
         }
-        return user;   // or return a JWT token if you plan to use it
+        return this.userRepository.findByEmailOrUsername(emailOrUsername);   // or return a JWT token if you plan to use it
     }
 }
