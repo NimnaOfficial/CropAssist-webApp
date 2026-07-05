@@ -2,7 +2,7 @@
 
 ### Accessed members: add name 👇🏻
 
-* **Nimna-branch:Nimn**
+* **Nimna-branch:Nimna**
 * **huwin**
 * **Vidura**
 * **Dulan**
