@@ -1,9 +1,10 @@
 package org.ead2.crop.controller;
 
+import org.ead2.crop.data.Crop;
 import org.ead2.crop.service.CropService;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * CropController is intended to handle HTTP requests for the Crop Service.
@@ -17,9 +18,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class CropController {
 
     private final CropService cropService;
+
     public CropController(CropService cropService) {
 
         this.cropService = cropService;
+
     }
+
+    public Crop createCrop(Crop crop) {
+
+        return cropService.createCrop(crop);
+
+    }
+
+
 
 }
