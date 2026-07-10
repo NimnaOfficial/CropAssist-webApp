@@ -44,4 +44,9 @@ public class CropController {
     public void deleteCrop(@PathVariable Long id) {
         cropService.deleteCrop(id);
     }
+
+    @PutMapping(path = "/crops/{id}/status")
+    public Crop updateCropStatus(@PathVariable Long id, @RequestParam Crop.Status status) {
+        return cropService.updateCropStatus(id, status);
+    }
 }
