@@ -31,4 +31,12 @@ public class CropService {
     public List<Crop> getAllCrops() {
         return cropRepository.findAll();
     }
+
+    public Crop updateCrop(Crop crop) {
+        return cropRepository.save(crop);
+    }
+
+    public void deleteCrop(Long id) {
+        cropRepository.deleteById(id);
+    }
 }

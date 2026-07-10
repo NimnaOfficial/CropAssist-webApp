@@ -115,12 +115,28 @@ export default function ManagerDashboard() {
       return;
     }
     
-    // Fetch users from backend (as this is the Manager page, we need all users)
-    fetch("http://localhost:8081/Api/users")
-      .then(res => res.json())
-      .then(data => {
-        if(Array.isArray(data)) {
-          const loadedFarmers: FarmerUser[] = data.map((u: any) => ({
+    // Fetch users and crops from backend
+    Promise.all([
+      fetch("http://localhost:8081/Api/users").then(res => res.json()),
+      fetch("http://localhost:8082/api/crops").then(res => res.json())
+    ])
+    .then(([usersData, cropsData]) => {
+      if (Array.isArray(usersData)) {
+        const allCrops = Array.isArray(cropsData) ? cropsData : [];
+        const loadedFarmers: FarmerUser[] = usersData.map((u: any) => {
+          const userCrops = allCrops.filter(c => c.farmerId === u.id).map(c => ({
+            id: c.id,
+            name: c.name || "",
+            field: c.fieldLocation || "",
+            status: (c.status || "Growing").charAt(0).toUpperCase() + (c.status || "Growing").slice(1).toLowerCase(),
+            health: c.healthPercentage || 100,
+            area: `${c.areaSize || 0} ${c.areaUnit || "ha"}`,
+            planted: c.plantedDate || "",
+            harvest: c.expectedHarvestDate || "",
+            tags: []
+          }));
+
+          return {
             id: u.id,
             name: u.fullName || "Unknown",
             email: u.email || "",
@@ -133,13 +149,14 @@ export default function ManagerDashboard() {
             memberSince: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
             status: u.status ? u.status.toLowerCase() as FarmerUser["status"] : "pending",
             teamSize: u.teamSize || 1,
-            crops: []
-          }));
-          
-          setFarmers(loadedFarmers);
-        }
-      })
-      .catch(err => console.error("Failed to fetch backend users:", err));
+            crops: userCrops
+          };
+        });
+        
+        setFarmers(loadedFarmers);
+      }
+    })
+    .catch(err => console.error("Failed to fetch backend data:", err));
   }, []);
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
