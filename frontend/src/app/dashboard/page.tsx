@@ -177,7 +177,7 @@ export default function DashboardPage() {
   // Profile Edit State
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
-    id: 1,
+    id: 0,
     firstName: "Loading...", lastName: "", username: "", email: "", phone: "+94 7X XXX XXXX",
     nic: "", age: "", address: "N/A", type: "N/A",
     role: "", // ADDED ROLE HERE
@@ -298,7 +298,7 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (profileData.id && profileData.id !== 1) { // 1 is default loading id
+    if (profileData.id !== 0) { // 0 is default loading id
       fetchCrops();
     }
   }, [profileData.id]);
