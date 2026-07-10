@@ -273,6 +273,36 @@ export default function DashboardPage() {
     setIsEditingProfile(!isEditingProfile);
   };
 
+  const fetchCrops = async () => {
+    try {
+      const res = await fetch("http://localhost:8082/api/crops");
+      if (res.ok) {
+        const data = await res.json();
+        // Filter crops for the logged-in farmer
+        const userCrops = data.filter((c: any) => c.farmerId === profileData.id);
+        const mapped = userCrops.map((c: any) => ({
+          id: c.id,
+          name: c.name || "",
+          field: c.fieldLocation || "",
+          status: (c.status || "Growing").charAt(0).toUpperCase() + (c.status || "Growing").slice(1).toLowerCase(),
+          health: c.healthPercentage || 100,
+          area: `${c.areaSize || 0} ${c.areaUnit || "ha"}`,
+          planted: c.plantedDate || "",
+          harvest: c.expectedHarvestDate || "",
+        }));
+        setActiveCrops(mapped);
+      }
+    } catch (err) {
+      console.error("Failed to fetch crops", err);
+    }
+  };
+
+  useEffect(() => {
+    if (profileData.id && profileData.id !== 1) { // 1 is default loading id
+      fetchCrops();
+    }
+  }, [profileData.id]);
+
   const openAddCrop = () => {
     setEditingCropId(null);
     setCropForm(defaultCrop);
@@ -288,19 +318,55 @@ export default function DashboardPage() {
     setCropModalOpen(true);
   };
 
-  const handleSaveCrop = (e: React.FormEvent) => {
+  const handleSaveCrop = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingCropId) {
-      setActiveCrops(activeCrops.map(c => c.id === editingCropId ? { ...cropForm, id: editingCropId } : c));
-    } else {
-      setActiveCrops([...activeCrops, { ...cropForm, id: Date.now() }]);
+    
+    // Extract numeric area and unit from "2.5 ha"
+    const parsedArea = parseFloat(cropForm.area.toString().replace(/[^0-9.]/g, '')) || 0;
+    const unit = cropForm.area.toString().replace(/[0-9.\s]/g, '') || "ha";
+
+    const payload = {
+      farmerId: profileData.id,
+      name: cropForm.name,
+      fieldLocation: cropForm.field,
+      status: cropForm.status.toUpperCase(),
+      healthPercentage: cropForm.health,
+      areaSize: parsedArea,
+      areaUnit: unit,
+      plantedDate: cropForm.planted || new Date().toISOString().split('T')[0],
+      expectedHarvestDate: cropForm.harvest || new Date().toISOString().split('T')[0],
+      ...(editingCropId ? { id: editingCropId } : {})
+    };
+
+    try {
+      if (editingCropId) {
+        await fetch("http://localhost:8082/api/crops", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await fetch("http://localhost:8082/api/crops", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      }
+      fetchCrops(); // Refresh list from server
+      setCropModalOpen(false);
+      setCropForm(defaultCrop);
+    } catch (err) {
+      console.error("Failed to save crop", err);
     }
-    setCropModalOpen(false);
-    setCropForm(defaultCrop);
   };
 
-  const deleteCrop = (id: number) => {
-    setActiveCrops(activeCrops.filter(c => c.id !== id));
+  const deleteCrop = async (id: number) => {
+    try {
+      await fetch(`http://localhost:8082/api/crops/${id}`, { method: "DELETE" });
+      fetchCrops(); // Refresh list from server
+    } catch (err) {
+      console.error("Failed to delete crop", err);
+    }
   };
 
   const dismissNotification = (id: number) => {
