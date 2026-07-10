@@ -39,4 +39,10 @@ public class CropService {
     public void deleteCrop(Long id) {
         cropRepository.deleteById(id);
     }
+
+    public Crop updateCropStatus(Long id, Crop.Status status) {
+        Crop crop = cropRepository.findById(id).orElseThrow(() -> new RuntimeException("Crop not found"));
+        crop.setStatus(status);
+        return cropRepository.save(crop);
+    }
 }

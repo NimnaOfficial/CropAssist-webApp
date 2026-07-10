@@ -286,16 +286,23 @@ export default function ManagerDashboard() {
     }
   };
 
-  const approveCrop = (cropId: number, farmerId: number) => {
-    setFarmers(farmers.map(f => {
-      if (f.id === farmerId) {
-        return {
-          ...f,
-          crops: f.crops.map(c => c.id === cropId ? { ...c, status: "Approved" } : c)
-        };
-      }
-      return f;
-    }));
+  const approveCrop = async (cropId: number, farmerId: number) => {
+    try {
+      await fetch(`http://localhost:8082/api/crops/${cropId}/status?status=APPROVED`, {
+        method: "PUT"
+      });
+      setFarmers(farmers.map(f => {
+        if (f.id === farmerId) {
+          return {
+            ...f,
+            crops: f.crops.map(c => c.id === cropId ? { ...c, status: "Approved" } : c)
+          };
+        }
+        return f;
+      }));
+    } catch (err) {
+      console.error("Failed to approve crop:", err);
+    }
   };
 
   const handleAddTag = (cropId: number, farmerId: number) => {

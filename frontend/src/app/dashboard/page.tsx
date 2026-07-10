@@ -536,6 +536,27 @@ export default function DashboardPage() {
               {/* ════════ OVERVIEW TAB ════════ */}
               {activeNav === "overview" && (
                 <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-8">
+                  
+                  {/* DIRECT APPROVAL NOTIFICATION BANNER */}
+                  {activeCrops.filter(c => c.status === "Approved").length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-3xl flex items-center justify-between shadow-lg shadow-emerald-500/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                          <Check size={24} />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-gelasio text-emerald-700 dark:text-emerald-400">Good News! You have approved crops.</h3>
+                          <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80 mt-1">
+                            <strong className="font-semibold">{activeCrops.filter(c => c.status === "Approved").map(c => c.name).join(", ")}</strong> {activeCrops.filter(c => c.status === "Approved").length > 1 ? "have" : "has"} been officially approved by the manager!
+                          </p>
+                        </div>
+                      </div>
+                      <button onClick={() => setActiveNav('crops')} className="px-5 py-2.5 bg-emerald-500 text-white text-xs uppercase tracking-widest rounded-lg hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20">
+                        View Crops
+                      </button>
+                    </motion.div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {stats.map((stat, i) => {
                       const Icon = stat.icon;
@@ -634,6 +655,7 @@ export default function DashboardPage() {
                                   crop.status === "Growing" ? "text-green-600 dark:text-green-400 border-green-500/20 bg-green-500/10 dark:bg-green-500/5" :
                                   crop.status === "Harvesting" ? "text-yellow-600 dark:text-yellow-400 border-yellow-500/20 bg-yellow-500/10 dark:bg-yellow-500/5" :
                                   crop.status === "Seedling" ? "text-blue-600 dark:text-blue-400 border-blue-500/20 bg-blue-500/10 dark:bg-blue-500/5" :
+                                  crop.status === "Approved" ? "text-emerald-600 dark:text-emerald-400 border-emerald-500/20 bg-emerald-500/10 dark:bg-emerald-500/5 font-medium" :
                                   "text-purple-600 dark:text-purple-400 border-purple-500/20 bg-purple-500/10 dark:bg-purple-500/5"
                                 }`}>{crop.status}</span>
                               </td>
@@ -704,7 +726,9 @@ export default function DashboardPage() {
                             <span className={
                               crop.status === "Growing" ? "text-green-600 dark:text-green-400" :
                               crop.status === "Harvesting" ? "text-yellow-600 dark:text-yellow-400" :
-                              crop.status === "Seedling" ? "text-blue-600 dark:text-blue-400" : "text-purple-600 dark:text-purple-400"
+                              crop.status === "Seedling" ? "text-blue-600 dark:text-blue-400" :
+                              crop.status === "Approved" ? "text-emerald-600 dark:text-emerald-400 font-medium" :
+                              "text-purple-600 dark:text-purple-400"
                             }>{crop.status}</span>
                           </div>
                           <div className="flex justify-between"><span>Planted</span><span className="text-zinc-800 dark:text-white/70">{crop.planted}</span></div>
@@ -972,6 +996,7 @@ export default function DashboardPage() {
                       <option value="Growing" className="bg-white text-black">Growing</option>
                       <option value="Mature" className="bg-white text-black">Mature</option>
                       <option value="Harvesting" className="bg-white text-black">Harvesting</option>
+                      <option value="Approved" className="bg-white text-black" disabled={cropForm.status !== "Approved"}>Approved (Manager Only)</option>
                     </select>
                   </div>
                   <div>
