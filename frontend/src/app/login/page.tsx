@@ -90,7 +90,7 @@ export default function LoginPage() {
     
     try {
       // Send the login request to the backend
-      const response = await fetch("http://localhost:8081/Api/login", {
+      const response = await fetch("http://localhost:8081/cropmgr_app/Api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ emailOrUsername: formData.username, password: formData.password })
