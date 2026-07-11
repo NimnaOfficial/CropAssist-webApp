@@ -22,4 +22,8 @@ public class CommsService {
     public List<Comms> getMessagesByFarmer(Long farmerId) {
         return commsRepository.findByFarmerIdOrderBySentAtAsc(farmerId);
     }
+
+    public List<Comms> getAllMessages() {
+        return commsRepository.findAll();
+    }
 }
