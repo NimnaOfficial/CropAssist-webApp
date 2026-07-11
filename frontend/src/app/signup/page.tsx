@@ -172,7 +172,7 @@ export default function SignupPage() {
       
       // Async uniqueness check
       try {
-        const usersRes = await fetch("http://localhost:8081/Api/users");
+        const usersRes = await fetch("http://localhost:8081/cropmgr_app/Api/users");
         if (usersRes.ok) {
           const allUsers = await usersRes.json();
           if (Array.isArray(allUsers) && allUsers.some((u: any) => u.username === formData.username)) {
@@ -228,7 +228,7 @@ export default function SignupPage() {
           status: "ACTIVE"
         };
 
-        const response = await fetch("http://localhost:8081/Api/users", {
+        const response = await fetch("http://localhost:8081/cropmgr_app/Api/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
