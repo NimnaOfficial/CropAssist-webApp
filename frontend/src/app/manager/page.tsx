@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import DashboardBackground from "../../components/DashboardBackground";
+import LoadingPanel from "../../components/LoadingPanel";
 
 /* ═══════ TYPES ═══════ */
 interface FarmerUser {
@@ -63,6 +64,7 @@ export default function ManagerDashboard() {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [isNavOpen, setIsNavOpen] = useState(true);
   
@@ -154,20 +156,30 @@ export default function ManagerDashboard() {
         });
         
         setFarmers(loadedFarmers);
+        // Data loaded, hide loading panel
+        setTimeout(() => setDashboardLoading(false), 800);
       }
     })
-    .catch(err => console.error("Failed to fetch backend data:", err));
+    .catch(err => {
+      console.error("Failed to fetch backend data:", err);
+      setDashboardLoading(false);
+    });
   }, []);
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [allMessages, chatFarmer]);
 
   // Derived Stats
+  const totalArea = farmers.flatMap(f => f.crops).reduce((acc, c) => {
+    const val = parseFloat(c.area.toString().replace(/[^0-9.]/g, '')) || 0;
+    return acc + val;
+  }, 0).toFixed(2);
+
   const managerStats = [
-    { label: "Total Farmers", value: farmers.length.toString(), change: "+2", up: true, icon: Users, color: "green" },
-    { label: "Active Crops", value: farmers.flatMap(f => f.crops).length.toString(), change: "+3", up: true, icon: Sprout, color: "green" },
-    { label: "Pending Approvals", value: farmers.filter(f => f.status === "pending").length.toString(), change: "0", up: false, icon: Shield, color: "red" },
-    { label: "Total Fields", value: "23 ha", change: "+4.2", up: true, icon: MapPin, color: "green" },
+    { label: "Total Farmers", value: farmers.length.toString(), icon: Users, color: "green" },
+    { label: "Active Crops", value: farmers.flatMap(f => f.crops).length.toString(), icon: Sprout, color: "green" },
+    { label: "Pending Approvals", value: farmers.filter(f => f.status === "pending").length.toString(), icon: Shield, color: "red" },
+    { label: "Total Fields", value: `${totalArea} ha`, icon: MapPin, color: "green" },
   ];
 
   // Filtered & sorted farmers
@@ -184,41 +196,15 @@ export default function ManagerDashboard() {
     });
 
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [selectedDateFilter, setSelectedDateFilter] = useState("All Time");
   const [adminNotifications, setAdminNotifications] = useState([
     { id: 1, text: "A new farmer requested approval." },
     { id: 2, text: "System backup completed successfully." },
     { id: 3, text: "High server load detected in region Asia-South." }
   ]);
 
-  const isDateInFilter = (dateString: string, filter: string) => {
-    if (!dateString) return true;
-    const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (filter === "Today") {
-      return date.toDateString() === today.toDateString();
-    } else if (filter === "Yesterday") {
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      return date.toDateString() === yesterday.toDateString();
-    } else if (filter === "Last 7 Days") {
-      const last7 = new Date(today);
-      last7.setDate(last7.getDate() - 7);
-      return date >= last7;
-    } else if (filter === "This Month") {
-      return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
-    } else if (filter === "This Year") {
-      return date.getFullYear() === today.getFullYear();
-    }
-    return true; // For any other value like "All Time"
-  };
-
   // All crops from all farmers
   const allCrops = farmers.flatMap(f => f.crops.map(c => ({ ...c, farmerName: f.name, farmerId: f.id })));
   const filteredCrops = allCrops
-    .filter(c => isDateInFilter(c.date, selectedDateFilter))
     .filter(c => cropUserFilter === "all" || c.farmerId === cropUserFilter)
     .filter(c => c.name.toLowerCase().includes(cropSearch.toLowerCase()) || c.field.toLowerCase().includes(cropSearch.toLowerCase()) || c.tags?.some(t => t.toLowerCase().includes(cropSearch.toLowerCase())));
 
@@ -481,21 +467,6 @@ export default function ManagerDashboard() {
             <div>
               <h1 className="text-3xl font-gelasio tracking-wide text-zinc-900 dark:text-white">Manager Dashboard</h1>
               <p className="text-xs text-zinc-500 dark:text-white/40 mt-1 uppercase tracking-widest">Agricultural Enterprise Management</p>
-            </div>
-            <div className="relative z-20">
-              <button onClick={() => setActiveDropdown(activeDropdown === 'date' ? null : 'date')} className="flex items-center gap-3 px-4 py-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors group cursor-pointer border border-transparent hover:border-zinc-300 dark:hover:border-white/20">
-                <Calendar size={14} className="text-zinc-500 dark:text-white/40 group-hover:text-green-500 transition-colors" strokeWidth={1.5} />
-                <span className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{selectedDateFilter}</span>
-              </button>
-              <AnimatePresence>
-                {activeDropdown === 'date' && (
-                  <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-48 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50">
-                    {["Today", "Yesterday", "Last 7 Days", "This Month", "This Year", "All Time"].map(t => (
-                      <button key={t} onClick={() => { setSelectedDateFilter(t); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-xs ${selectedDateFilter === t ? 'text-green-500 bg-zinc-100 dark:bg-white/5' : 'text-zinc-600 dark:text-white/70'} hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors`}>{t}</button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </div>
 
@@ -960,6 +931,12 @@ export default function ManagerDashboard() {
           );
         })}
       </div>
+
+      {/* ═══════ LOADING PANEL ═══════ */}
+      <LoadingPanel
+        isVisible={dashboardLoading}
+        message="Loading Manager Dashboard"
+      />
     </div>
   );
 }

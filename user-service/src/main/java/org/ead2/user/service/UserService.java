@@ -143,4 +143,5 @@ public class UserService {
         }
         return this.userRepository.findByEmailOrUsername(emailOrUsername);   // or return a JWT token if you plan to use it
     }
+
 }

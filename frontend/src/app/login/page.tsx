@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, Lock, Eye, EyeOff, ArrowRight, Leaf, Sprout, ChevronLeft } from "lucide-react";
 import TypewriterText from "@/src/components/TypewriterText";
+import LoadingPanel from "@/src/components/LoadingPanel";
 
 interface LeafData {
   id: number;
@@ -71,6 +72,8 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoadingPanel, setShowLoadingPanel] = useState(false);
+  const navigateDestRef = useRef("/dashboard");
 
   const handleChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -78,7 +81,11 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    if (!formData.username.trim() || !formData.password.trim()) {
+      setError("Please enter both username/email and password.");
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -96,12 +103,14 @@ export default function LoginPage() {
         // Save the authenticated user session to localStorage so other pages (like dashboard) can use it
         localStorage.setItem("cropAssistUser", JSON.stringify(user));
         
-        // Redirect based on the user's role
+        // Show loading panel and redirect after animation
         if (user.role === "MANAGER") {
-          router.push("/manager");
+          navigateDestRef.current = "/manager";
         } else {
-          router.push("/dashboard");
+          navigateDestRef.current = "/dashboard";
         }
+        setShowLoadingPanel(true);
+        setTimeout(() => router.push(navigateDestRef.current), 2400);
       } else {
         setError("Invalid username/email or password.");
       }
@@ -258,6 +267,12 @@ export default function LoginPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* ═══════ LOADING PANEL ═══════ */}
+      <LoadingPanel
+        isVisible={showLoadingPanel}
+        message={navigateDestRef.current === "/manager" ? "Loading Manager Dashboard" : "Loading Your Farm Dashboard"}
+      />
     </div>
   );
 }
