@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, Mail, Phone, Lock, MapPin, Sprout, Users, CreditCard, Eye, EyeOff, ArrowRight, Leaf, ChevronLeft, ChevronRight } from "lucide-react";
 import TypewriterText from "@/src/components/TypewriterText";
+import LoadingPanel from "@/src/components/LoadingPanel";
+import Select3D from "@/src/components/Select3D";
 
 /* ═══════ MULTI-STEP SIGN UP FIELDS ═══════ */
 const signUpSteps = [
@@ -23,7 +25,11 @@ const signUpSteps = [
   {
     title: "Farm",
     fields: [
-      { name: "farmAddress", label: "Farm Address", type: "text", icon: MapPin },
+      { name: "country", label: "Country", type: "select", icon: MapPin },
+      { name: "province", label: "Province", type: "select", icon: MapPin },
+      { name: "district", label: "District", type: "select", icon: MapPin },
+      { name: "area", label: "Area/Town", type: "text", icon: MapPin },
+      { name: "addressLine", label: "Street Address", type: "text", icon: MapPin },
       { name: "farming", label: "Farming Type", type: "text", icon: Sprout },
       { name: "members", label: "Team Size", type: "number", icon: Users },
     ]
@@ -103,32 +109,117 @@ export default function SignupPage() {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoadingPanel, setShowLoadingPanel] = useState(false);
+
+  const locationData: Record<string, string[]> = {
+    "Central": ["Kandy", "Matale", "Nuwara Eliya"],
+    "Eastern": ["Ampara", "Batticaloa", "Trincomalee"],
+    "North Central": ["Anuradhapura", "Polonnaruwa"],
+    "North Western": ["Kurunegala", "Puttalam"],
+    "Northern": ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"],
+    "Sabaragamuwa": ["Kegalle", "Ratnapura"],
+    "Southern": ["Galle", "Hambantota", "Matara"],
+    "Uva": ["Badulla", "Monaragala"],
+    "Western": ["Colombo", "Gampaha", "Kalutara"]
+  };
 
   const handleChange = (name: string, value: string) => {
+    // Prevent typing numbers in name fields
+    if (name === "firstName" || name === "lastName") {
+      value = value.replace(/[0-9]/g, "");
+    }
+    
+    // Reset district if province changes
+    if (name === "province") {
+      setFormData(prev => ({ ...prev, [name]: value, district: "" }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const validateStep = async (currentStep: number): Promise<boolean> => {
+    setError("");
+
+    if (currentStep === 0) {
+      if (!formData.firstName || formData.firstName.trim().length < 2) { setError("First name must be at least 2 characters."); return false; }
+      if (!formData.lastName || formData.lastName.trim().length < 2) { setError("Last name must be at least 2 characters."); return false; }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!formData.email || !emailRegex.test(formData.email)) { setError("Please enter a valid email address."); return false; }
+      
+      const phoneRegex = /^(?:0|0094|\+94)?(?:7|1)\d{8}$/;
+      if (!formData.phone || !phoneRegex.test(formData.phone)) { setError("Please enter a valid phone number (e.g., 0712345678 or +94712345678)."); return false; }
+      
+      const ageNum = parseInt(formData.age);
+      if (!formData.age || isNaN(ageNum) || ageNum < 18 || ageNum > 100) { setError("Age must be between 18 and 100."); return false; }
+      
+      const nicRegex = /^([0-9]{9}[xXvV]|[0-9]{12})$/;
+      if (!formData.nic || !nicRegex.test(formData.nic)) { setError("Please enter a valid NIC number."); return false; }
+    }
+    else if (currentStep === 1) {
+      if (!formData.country) { setError("Please select a Country."); return false; }
+      if (!formData.province) { setError("Please select a Province."); return false; }
+      if (!formData.district) { setError("Please select a District."); return false; }
+      if (!formData.area || formData.area.trim().length < 2) { setError("Please enter an Area/Town."); return false; }
+      if (!formData.addressLine || formData.addressLine.trim().length < 2) { setError("Please enter a Street Address."); return false; }
+      if (!formData.farming || formData.farming.trim().length < 2) { setError("Please enter a valid farming type."); return false; }
+      const teamNum = parseInt(formData.members);
+      if (!formData.members || isNaN(teamNum) || teamNum < 1) { setError("Team size must be at least 1."); return false; }
+    }
+    else if (currentStep === 2) {
+      if (!formData.username || formData.username.trim().length < 4) { setError("Username must be at least 4 characters."); return false; }
+      
+      // Async uniqueness check
+      try {
+        const usersRes = await fetch("http://localhost:8081/Api/users");
+        if (usersRes.ok) {
+          const allUsers = await usersRes.json();
+          if (Array.isArray(allUsers) && allUsers.some((u: any) => u.username === formData.username)) {
+            setError("Username is already taken. Please choose another.");
+            return false;
+          }
+        }
+      } catch(e) {
+        // Backend unreachable, ignore for now
+      }
+
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!formData.password || !passwordRegex.test(formData.password)) {
+        setError("Password must be 8+ characters with uppercase, lowercase, number, and special character.");
+        return false;
+      }
+      
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match!");
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
+    const isValid = await validateStep(step);
+    if (!isValid) return;
+
     if (step < signUpSteps.length - 1) {
       setStep(step + 1);
     } else {
-      if (formData.password !== formData.confirmPassword) {
-        setError("Passwords do not match!");
-        return;
-      }
       
       setIsLoading(true);
       try {
+        const fullAddress = `${formData.addressLine || ''}, ${formData.area || ''}, ${formData.district || ''}, ${formData.province || ''}, ${formData.country || ''}`;
+
         const payload = {
           fullName: `${formData.firstName || ''} ${formData.lastName || ''}`.trim(),
           email: formData.email,
           phone: formData.phone,
           nic: formData.nic,
           age: parseInt(formData.age) || null,
-          address: formData.farmAddress,
+          address: fullAddress,
           farmingType: formData.farming,
           teamSize: parseInt(formData.members) || 1,
           username: formData.username,
@@ -144,7 +235,8 @@ export default function SignupPage() {
         });
 
         if (response.ok) {
-          router.push("/login");
+          setShowLoadingPanel(true);
+          setTimeout(() => router.push("/login"), 2400);
         } else {
           setError("Failed to create account. Email or NIC might already exist.");
         }
@@ -266,24 +358,51 @@ export default function SignupPage() {
                     const isPassword = field.type === "password";
 
                     return (
-                      <div key={field.name} className="relative group">
-                        <Icon size={18} className="absolute left-0 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-green-400 transition-colors" strokeWidth={1.5} />
-                        <input
-                          type={isPassword ? (showPassword ? "text" : "password") : field.type}
-                          required
-                          placeholder={field.label}
-                          value={formData[field.name] || ""}
-                          onChange={(e) => handleChange(field.name, e.target.value)}
-                          className="w-full bg-transparent border-0 border-b border-white/20 text-white pl-8 pr-12 py-3 text-sm focus:outline-none focus:border-green-400 focus:bg-white/5 transition-all duration-300 placeholder:text-white/30 font-light rounded-none"
-                        />
-                        {isPassword && (
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
-                          >
-                            {showPassword ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}
-                          </button>
+                      <div key={field.name} className="relative group flex flex-col gap-1">
+                        <div className="relative">
+                          <Icon size={18} className="absolute left-0 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-green-400 transition-colors" strokeWidth={1.5} />
+                          {field.type === "select" ? (
+                            <Select3D
+                              value={formData[field.name] || ""}
+                              onChange={(val) => handleChange(field.name, val)}
+                              options={
+                                field.name === "country" ? ["Sri Lanka"] :
+                                field.name === "province" ? Object.keys(locationData) :
+                                field.name === "district" ? (locationData[formData.province] || []) : []
+                              }
+                              placeholder={field.label}
+                              className="border-0 border-b border-white/20 pb-1 text-white placeholder:text-white/30 pl-8 font-light"
+                            />
+                          ) : (
+                            <input
+                              type={isPassword ? (showPassword ? "text" : "password") : field.type}
+                              required
+                              placeholder={field.label}
+                              value={formData[field.name] || ""}
+                              onChange={(e) => handleChange(field.name, e.target.value)}
+                              className="w-full bg-transparent border-0 border-b border-white/20 text-white pl-8 pr-12 py-3 text-sm focus:outline-none focus:border-green-400 focus:bg-white/5 transition-all duration-300 placeholder:text-white/30 font-light rounded-none"
+                            />
+                          )}
+                          
+                          {isPassword && (
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-0 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                            >
+                              {showPassword ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}
+                            </button>
+                          )}
+                        </div>
+
+                        {field.name === "password" && (
+                          <div className="mt-2 flex flex-col gap-1 text-xs text-white/50 pl-8 font-normal">
+                            <p className={(formData.password?.length >= 8) ? "text-green-400" : ""}>{(formData.password?.length >= 8) ? "✓" : "○"} At least 8 characters</p>
+                            <p className={/[A-Z]/.test(formData.password || "") ? "text-green-400" : ""}>{/[A-Z]/.test(formData.password || "") ? "✓" : "○"} 1 Uppercase letter</p>
+                            <p className={/[a-z]/.test(formData.password || "") ? "text-green-400" : ""}>{/[a-z]/.test(formData.password || "") ? "✓" : "○"} 1 Lowercase letter</p>
+                            <p className={/\d/.test(formData.password || "") ? "text-green-400" : ""}>{/\d/.test(formData.password || "") ? "✓" : "○"} 1 Number</p>
+                            <p className={/[@$!%*?&]/.test(formData.password || "") ? "text-green-400" : ""}>{/[@$!%*?&]/.test(formData.password || "") ? "✓" : "○"} 1 Special character (@$!%*?&)</p>
+                          </div>
                         )}
                       </div>
                     );
@@ -339,6 +458,12 @@ export default function SignupPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* ═══════ LOADING PANEL ═══════ */}
+      <LoadingPanel
+        isVisible={showLoadingPanel}
+        message="Account Created Successfully"
+      />
     </div>
   );
 }
