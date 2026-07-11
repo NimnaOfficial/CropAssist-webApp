@@ -180,14 +180,45 @@ export default function DashboardPage() {
   // Chat State
   const [chatOpen, setChatOpen] = useState(false);
   const [donutKey, setDonutKey] = useState(0);
-  const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: "Manager", text: "Hello John, any updates on Field A-01? Let me know if you need assistance.", time: "09:00 AM" }
-  ]);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const fetchMessages = async () => {
+  if (profileData.id === 0) return;
+
+  try {
+    const response = await fetch(
+      `http://localhost:8083/cropmgr_app/api/messages/${profileData.id}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to load messages");
+    }
+
+    const data = await response.json();
+
+    const mappedMessages = data.map((message: any) => ({
+      id: message.id,
+      sender: message.senderRole === "FARMER" ? "You" : "Manager",
+      text: message.content,
+      time: message.sentAt
+        ? new Date(message.sentAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "",
+    }));
+
+    setChatMessages(mappedMessages);
+  } catch (error) {
+    console.error("Failed to fetch messages:", error);
+  }
+};
+
   useEffect(() => { 
-    setMounted(true); 
+    setMounted(true);
+
     
     // Attempt to retrieve the saved session from localStorage
     const savedUserStr = localStorage.getItem("cropAssistUser");
@@ -255,6 +286,22 @@ export default function DashboardPage() {
       router.push("/login");
     }
   }, [router]);
+
+  useEffect(() => {
+    if (profileData.id !== 0) {
+        fetchMessages();
+    }
+}, [profileData.id]);
+
+useEffect(() => {
+    if (profileData.id === 0) return;
+
+    const interval = setInterval(() => {
+        fetchMessages();
+    }, 2000);
+
+    return () => clearInterval(interval);
+}, [profileData.id]);
   
   useEffect(() => {
     if (chatOpen && chatEndRef.current) {
@@ -393,15 +440,40 @@ export default function DashboardPage() {
     setActiveNotifications(activeNotifications.filter(n => n.id !== id));
   };
 
-  const handleSendMsg = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMsg.trim()) return;
-    setChatMessages(prev => [...prev, { id: Date.now(), sender: "You", text: newMsg, time: "Just now" }]);
+  const handleSendMsg = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  const messageText = newMsg.trim();
+
+  if (!messageText || profileData.id === 0) return;
+
+  try {
+    const response = await fetch(
+      "http://localhost:8083/cropmgr_app/api/messages",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          farmerId: profileData.id,
+          senderRole: "FARMER",
+          content: messageText,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to send message");
+    }
+
     setNewMsg("");
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { id: Date.now(), sender: "Manager", text: "Received! I will check on this and get back to you.", time: "Just now" }]);
-    }, 1500);
-  };
+    fetchMessages();
+
+  } catch (error) {
+    console.error("Failed to send message:", error);
+  }
+};
 
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
