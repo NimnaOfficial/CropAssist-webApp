@@ -87,14 +87,40 @@ export default function ManagerDashboard() {
   
   // Messages state
   const [chatFarmer, setChatFarmer] = useState<FarmerUser | null>(null);
-  const [allMessages, setAllMessages] = useState<ChatMessage[]>([
-    { id: 1, sender: "John Farmer", text: "Field A-01 moisture is dropping. Please advise.", time: "09:15 AM", farmerId: 1 },
-    { id: 2, sender: "Manager", text: "Increase irrigation cycle to 2x daily.", time: "09:20 AM", farmerId: 1 },
-    { id: 3, sender: "Nimali Perera", text: "Cinnamon harvest ready. Need transport.", time: "10:00 AM", farmerId: 2 },
-    { id: 4, sender: "Kamal Silva", text: "Pest detected in coconut field E-04.", time: "11:30 AM", farmerId: 3 },
-  ]);
+  const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const fetchMessages = async (farmerId: number) => {
+  try {
+    const response = await fetch(
+      `http://localhost:8083/cropmgr_app/api/messages/${farmerId}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch messages");
+    }
+
+    const data = await response.json();
+
+    const mapped = data.map((m: any) => ({
+      id: m.id,
+      sender: m.senderRole === "MANAGER" ? "Manager" : "Farmer",
+      text: m.content,
+      time: m.sentAt
+        ? new Date(m.sentAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "",
+      farmerId: m.farmerId,
+    }));
+
+    setAllMessages(mapped);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   useEffect(() => { 
     setMounted(true);
@@ -168,6 +194,22 @@ export default function ManagerDashboard() {
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [allMessages, chatFarmer]);
+
+  useEffect(() => {
+  if (chatFarmer) {
+    fetchMessages(chatFarmer.id);
+  }
+}, [chatFarmer]);
+
+useEffect(() => {
+    if (!chatFarmer) return;
+
+    const interval = setInterval(() => {
+        fetchMessages(chatFarmer.id);
+    }, 2000);
+
+    return () => clearInterval(interval);
+}, [chatFarmer]);
 
   // Derived Stats
   const totalArea = farmers.flatMap(f => f.crops).reduce((acc, c) => {
@@ -311,12 +353,37 @@ export default function ManagerDashboard() {
     else { setSortField(field); setSortDir("asc"); }
   };
 
-  const handleSendMsg = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMsg.trim() || !chatFarmer) return;
-    setAllMessages(prev => [...prev, { id: Date.now(), sender: "Manager", text: newMsg, time: "Just now", farmerId: chatFarmer.id }]);
+  const handleSendMsg = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!newMsg.trim() || !chatFarmer) return;
+
+  try {
+    const response = await fetch(
+      "http://localhost:8083/cropmgr_app/api/messages",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          farmerId: chatFarmer.id,
+          senderRole: "MANAGER",
+          content: newMsg.trim(),
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to send message");
+    }
+
     setNewMsg("");
-  };
+    await fetchMessages(chatFarmer.id);
+  } catch (error) {
+    console.error("Failed to send manager message:", error);
+  }
+};
 
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
