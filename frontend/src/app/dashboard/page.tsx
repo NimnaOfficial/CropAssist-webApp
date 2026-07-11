@@ -133,7 +133,6 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   
   const [activeCrops, setActiveCrops] = useState(initialCrops);
-  const [activeNotifications, setActiveNotifications] = useState<any[]>([]);
   
   const [cropSearchTerm, setCropSearchTerm] = useState("");
   const [cropSortField, setCropSortField] = useState<"name" | "status" | "health">("name");
@@ -358,32 +357,6 @@ useEffect(() => {
           harvest: c.expectedHarvestDate || "",
         }));
         setActiveCrops(mapped);
-        
-        // Generate real-time notifications for the farmer
-        const newNotifications: any[] = [];
-        let notifId = 1;
-        
-        const lowHealthCrops = mapped.filter((c: any) => c.health < 60);
-        lowHealthCrops.forEach((c: any) => {
-          newNotifications.push({
-            id: notifId++,
-            text: `Low health alert: ${c.name} in ${c.field} is at ${c.health}% health.`,
-            time: "Just now",
-            icon: Bug // using Bug icon for health alert
-          });
-        });
-        
-        const readyToHarvest = mapped.filter((c: any) => c.status.toLowerCase() === "ready for harvest");
-        readyToHarvest.forEach((c: any) => {
-          newNotifications.push({
-             id: notifId++,
-             text: `Harvest ready: ${c.name} in ${c.field} is ready for harvest.`,
-             time: "Just now",
-             icon: Calendar
-          });
-        });
-        
-        setActiveNotifications(newNotifications);
       }
     } catch (err) {
       console.error("Failed to fetch crops", err);
@@ -464,8 +437,10 @@ useEffect(() => {
     }
   };
 
-  const dismissNotification = (id: number) => {
-    setActiveNotifications(activeNotifications.filter(n => n.id !== id));
+  const [dismissedNotifs, setDismissedNotifs] = useState<string[]>([]);
+
+  const dismissNotification = (id: number, text: string) => {
+    setDismissedNotifs([...dismissedNotifs, text]);
   };
 
   const handleSendMsg = async (e: React.FormEvent) => {
@@ -525,6 +500,43 @@ useEffect(() => {
     { label: "Average Health", value: `${avgHealth}%`, icon: Leaf },
     { label: "Active Crops", value: activeCrops.length.toString(), icon: Sprout },
   ];
+
+  // Derived Notifications
+  const derivedNotifications: any[] = [];
+  let notifId = 1;
+
+  activeCrops.filter(c => c.health < 60).forEach(c => {
+    derivedNotifications.push({
+      id: notifId++,
+      text: `Low health alert: ${c.name} in ${c.field} is at ${c.health}% health.`,
+      time: "Just now",
+      icon: Bug
+    });
+  });
+
+  activeCrops.filter(c => c.status.toLowerCase() === "ready for harvest").forEach(c => {
+    derivedNotifications.push({
+      id: notifId++,
+      text: `Harvest ready: ${c.name} in ${c.field} is ready for harvest.`,
+      time: "Just now",
+      icon: Calendar
+    });
+  });
+
+  // Check messages for latest from manager
+  if (chatMessages.length > 0) {
+    const lastMsg = chatMessages[chatMessages.length - 1];
+    if (lastMsg.sender === "Manager") {
+      derivedNotifications.push({
+        id: notifId++,
+        text: `New message from Manager: "${lastMsg.text.slice(0, 30)}${lastMsg.text.length > 30 ? '...' : ''}"`,
+        time: lastMsg.time || "Just now",
+        icon: MessageSquare
+      });
+    }
+  }
+
+  const visibleNotifications = derivedNotifications.filter(n => !dismissedNotifs.includes(n.text));
 
   return (
     <div className="flex min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-x-hidden">
@@ -989,24 +1001,27 @@ useEffect(() => {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2, duration: 0.5 }} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-6 shadow-sm dark:shadow-none">
               <h3 className="text-sm font-gelasio mb-6 flex items-center justify-between text-zinc-900 dark:text-white">
                 Notifications
-                <span className="text-[10px] text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5">{activeNotifications.length}</span>
+                <span className="text-[10px] text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5">{visibleNotifications.length}</span>
               </h3>
               <div className="flex flex-col gap-4">
-                {activeNotifications.length === 0 && (
+                {visibleNotifications.length === 0 && (
                   <p className="text-xs text-zinc-500 dark:text-white/40">You're all caught up!</p>
                 )}
-                {activeNotifications.map((n) => {
+                {visibleNotifications.map((n) => {
                   const Icon = n.icon;
                   return (
-                    <div key={n.id} onClick={() => dismissNotification(n.id)} className="flex items-start gap-3 group cursor-pointer">
-                      <div className="w-8 h-8 bg-zinc-100 dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-green-500/10 transition-colors shadow-sm dark:shadow-none">
-                        <Icon size={14} className="text-zinc-400 dark:text-white/40 group-hover:text-green-500 dark:group-hover:text-green-400 transition-colors" strokeWidth={1.5} />
+                    <motion.div key={n.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3 group relative">
+                      <div className="mt-1 flex-shrink-0">
+                        <Icon size={14} className="text-zinc-400 dark:text-white/40" />
                       </div>
-                      <div>
-                        <p className="text-xs text-zinc-700 dark:text-white/70 leading-relaxed group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{n.text}</p>
+                      <div className="pr-4">
+                        <p className="text-xs text-zinc-700 dark:text-white/80 leading-relaxed">{n.text}</p>
                         <p className="text-[10px] text-zinc-400 dark:text-white/30 mt-1">{n.time}</p>
                       </div>
-                    </div>
+                      <button onClick={() => dismissNotification(n.id, n.text)} className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1">
+                        <X size={12} />
+                      </button>
+                    </motion.div>
                   );
                 })}
               </div>
