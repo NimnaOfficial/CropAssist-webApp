@@ -91,10 +91,10 @@ export default function ManagerDashboard() {
   const [newMsg, setNewMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const fetchMessages = async (farmerId: number) => {
+  const fetchMessages = async () => {
   try {
     const response = await fetch(
-      `http://localhost:8083/cropmgr_app/api/messages/${farmerId}`
+      `http://localhost:8083/cropmgr_app/api/comms`
     );
 
     if (!response.ok) {
@@ -143,73 +143,93 @@ export default function ManagerDashboard() {
       return;
     }
     
-    // Fetch users and crops from backend
-    Promise.all([
-      fetch("http://localhost:8081/cropmgr_app/Api/users").then(res => res.json()),
-      fetch("http://localhost:8082/cropmgr_app/api/crops").then(res => res.json())
-    ])
-    .then(([usersData, cropsData]) => {
-      if (Array.isArray(usersData)) {
-        const allCrops = Array.isArray(cropsData) ? cropsData : [];
-        const loadedFarmers: FarmerUser[] = usersData.map((u: any) => {
-          const userCrops = allCrops.filter(c => c.farmerId === u.id).map(c => ({
-            id: c.id,
-            name: c.name || "",
-            field: c.fieldLocation || "",
-            status: (c.status || "Growing").charAt(0).toUpperCase() + (c.status || "Growing").slice(1).toLowerCase(),
-            health: c.healthPercentage || 100,
-            area: `${c.areaSize || 0} ${c.areaUnit || "ha"}`,
-            planted: c.plantedDate || "",
-            harvest: c.expectedHarvestDate || "",
-            tags: []
-          }));
+    const fetchDashboardData = () => {
+      Promise.all([
+        fetch("http://localhost:8081/cropmgr_app/Api/users").then(res => res.json()),
+        fetch("http://localhost:8082/cropmgr_app/api/crops").then(res => res.json())
+      ])
+      .then(([usersData, cropsData]) => {
+        if (Array.isArray(usersData)) {
+          const allCrops = Array.isArray(cropsData) ? cropsData : [];
+          const loadedFarmers: FarmerUser[] = usersData.map((u: any) => {
+            const userCrops = allCrops.filter(c => c.farmerId === u.id).map(c => ({
+              id: c.id,
+              name: c.name || "",
+              field: c.fieldLocation || "",
+              status: (c.status || "Growing").charAt(0).toUpperCase() + (c.status || "Growing").slice(1).toLowerCase(),
+              health: c.healthPercentage || 100,
+              area: `${c.areaSize || 0} ${c.areaUnit || "ha"}`,
+              planted: c.plantedDate || "",
+              harvest: c.expectedHarvestDate || "",
+              tags: []
+            }));
+  
+            return {
+              id: u.id,
+              name: u.fullName || "Unknown",
+              email: u.email || "",
+              username: u.username || "",
+              phone: u.phone || "N/A",
+              nic: u.nic || "",
+              age: (u.age || "").toString(),
+              address: u.address || "N/A",
+              role: u.role || "FARMER",
+              memberSince: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
+              status: u.status ? u.status.toLowerCase() as FarmerUser["status"] : "pending",
+              teamSize: u.teamSize || 1,
+              crops: userCrops
+            };
+          });
+          
+          setFarmers(loadedFarmers);
+          setDashboardLoading(false);
+          
+          // Generate real-time notifications
+          const newNotifications: any[] = [];
+          let notifId = 1;
+          
+          // Notification for pending farmers
+          const pendingFarmers = loadedFarmers.filter(f => f.status === "pending");
+          if (pendingFarmers.length > 0) {
+            newNotifications.push({ id: notifId++, text: `${pendingFarmers.length} farmer(s) waiting for approval.` });
+          }
+          
+          // Notifications for crops needing attention
+          const lowHealthCrops = allCrops.filter(c => c.healthPercentage < 50);
+          if (lowHealthCrops.length > 0) {
+            newNotifications.push({ id: notifId++, text: `${lowHealthCrops.length} crop(s) have critically low health.` });
+          }
+          
+          const readyToHarvest = allCrops.filter(c => c.status && c.status.toLowerCase() === "ready for harvest");
+          if (readyToHarvest.length > 0) {
+             newNotifications.push({ id: notifId++, text: `${readyToHarvest.length} crop(s) are ready for harvest.` });
+          }
+          
+          setAdminNotifications(newNotifications);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch backend data:", err);
+        setDashboardLoading(false);
+      });
+    };
 
-          return {
-            id: u.id,
-            name: u.fullName || "Unknown",
-            email: u.email || "",
-            username: u.username || "",
-            phone: u.phone || "N/A",
-            nic: u.nic || "",
-            age: (u.age || "").toString(),
-            address: u.address || "N/A",
-            role: u.role || "FARMER",
-            memberSince: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
-            status: u.status ? u.status.toLowerCase() as FarmerUser["status"] : "pending",
-            teamSize: u.teamSize || 1,
-            crops: userCrops
-          };
-        });
-        
-        setFarmers(loadedFarmers);
-        // Data loaded, hide loading panel
-        setTimeout(() => setDashboardLoading(false), 800);
-      }
-    })
-    .catch(err => {
-      console.error("Failed to fetch backend data:", err);
-      setDashboardLoading(false);
-    });
+    // Initial fetch
+    fetchDashboardData();
+    fetchMessages(); // Load all messages initially
+
+    // Set up real-time polling
+    const intervalId = setInterval(() => {
+      fetchDashboardData();
+      fetchMessages(); // Continuously sync all messages
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
+
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [allMessages, chatFarmer]);
-
-  useEffect(() => {
-  if (chatFarmer) {
-    fetchMessages(chatFarmer.id);
-  }
-}, [chatFarmer]);
-
-useEffect(() => {
-    if (!chatFarmer) return;
-
-    const interval = setInterval(() => {
-        fetchMessages(chatFarmer.id);
-    }, 2000);
-
-    return () => clearInterval(interval);
-}, [chatFarmer]);
 
   // Derived Stats
   const totalArea = farmers.flatMap(f => f.crops).reduce((acc, c) => {
@@ -238,11 +258,7 @@ useEffect(() => {
     });
 
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [adminNotifications, setAdminNotifications] = useState([
-    { id: 1, text: "A new farmer requested approval." },
-    { id: 2, text: "System backup completed successfully." },
-    { id: 3, text: "High server load detected in region Asia-South." }
-  ]);
+  const [adminNotifications, setAdminNotifications] = useState<any[]>([]);
 
   // All crops from all farmers
   const allCrops = farmers.flatMap(f => f.crops.map(c => ({ ...c, farmerName: f.name, farmerId: f.id })));
@@ -360,7 +376,7 @@ useEffect(() => {
 
   try {
     const response = await fetch(
-      "http://localhost:8083/cropmgr_app/api/messages",
+      "http://localhost:8083/cropmgr_app/api/comms",
       {
         method: "POST",
         headers: {
@@ -379,7 +395,7 @@ useEffect(() => {
     }
 
     setNewMsg("");
-    await fetchMessages(chatFarmer.id);
+    await fetchMessages();
   } catch (error) {
     console.error("Failed to send manager message:", error);
   }

@@ -133,7 +133,7 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   
   const [activeCrops, setActiveCrops] = useState(initialCrops);
-  const [activeNotifications, setActiveNotifications] = useState(initialNotifications);
+  const [activeNotifications, setActiveNotifications] = useState<any[]>([]);
   
   const [cropSearchTerm, setCropSearchTerm] = useState("");
   const [cropSortField, setCropSortField] = useState<"name" | "status" | "health">("name");
@@ -189,7 +189,7 @@ export default function DashboardPage() {
 
   try {
     const response = await fetch(
-      `http://localhost:8083/cropmgr_app/api/messages/${profileData.id}`
+      `http://localhost:8083/cropmgr_app/api/comms/${profileData.id}`
     );
 
     if (!response.ok) {
@@ -358,6 +358,32 @@ useEffect(() => {
           harvest: c.expectedHarvestDate || "",
         }));
         setActiveCrops(mapped);
+        
+        // Generate real-time notifications for the farmer
+        const newNotifications: any[] = [];
+        let notifId = 1;
+        
+        const lowHealthCrops = mapped.filter((c: any) => c.health < 60);
+        lowHealthCrops.forEach((c: any) => {
+          newNotifications.push({
+            id: notifId++,
+            text: `Low health alert: ${c.name} in ${c.field} is at ${c.health}% health.`,
+            time: "Just now",
+            icon: Bug // using Bug icon for health alert
+          });
+        });
+        
+        const readyToHarvest = mapped.filter((c: any) => c.status.toLowerCase() === "ready for harvest");
+        readyToHarvest.forEach((c: any) => {
+          newNotifications.push({
+             id: notifId++,
+             text: `Harvest ready: ${c.name} in ${c.field} is ready for harvest.`,
+             time: "Just now",
+             icon: Calendar
+          });
+        });
+        
+        setActiveNotifications(newNotifications);
       }
     } catch (err) {
       console.error("Failed to fetch crops", err);
@@ -367,6 +393,8 @@ useEffect(() => {
   useEffect(() => {
     if (profileData.id !== 0) { // 0 is default loading id
       fetchCrops();
+      const intervalId = setInterval(fetchCrops, 5000);
+      return () => clearInterval(intervalId);
     }
   }, [profileData.id]);
 
@@ -449,7 +477,7 @@ useEffect(() => {
 
   try {
     const response = await fetch(
-      "http://localhost:8083/cropmgr_app/api/messages",
+      "http://localhost:8083/cropmgr_app/api/comms",
       {
         method: "POST",
         headers: {
