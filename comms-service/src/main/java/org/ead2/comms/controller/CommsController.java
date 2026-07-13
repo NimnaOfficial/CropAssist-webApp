@@ -10,7 +10,6 @@ import java.util.List;
  * CommsController handles HTTP requests for the Communication Service.
  * Endpoints: send messages, retrieve messages by farmer ID.
  */
-@CrossOrigin(origins = "*") // Allows the frontend to communicate with this controller from any origin
 @RequestMapping(path = "/api") // Base URL path — combined with context-path becomes /cropmgr_app/api
 @RestController
 public class CommsController {

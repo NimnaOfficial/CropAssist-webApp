@@ -94,7 +94,7 @@ export default function ManagerDashboard() {
   const fetchMessages = async () => {
   try {
     const response = await fetch(
-      `http://localhost:8083/cropmgr_app/api/comms`
+      `http://localhost:8080/cropmgr_app/api/comms`
     );
 
     if (!response.ok) {
@@ -145,8 +145,8 @@ export default function ManagerDashboard() {
     
     const fetchDashboardData = () => {
       Promise.all([
-        fetch("http://localhost:8081/cropmgr_app/Api/users").then(res => res.json()),
-        fetch("http://localhost:8082/cropmgr_app/api/crops").then(res => res.json())
+        fetch("http://localhost:8080/cropmgr_app/Api/users").then(res => res.json()),
+        fetch("http://localhost:8080/cropmgr_app/api/crops").then(res => res.json())
       ])
       .then(([usersData, cropsData]) => {
         if (Array.isArray(usersData)) {
@@ -288,7 +288,7 @@ export default function ManagerDashboard() {
     };
 
     try {
-      const res = await fetch("http://localhost:8081/cropmgr_app/Api/users", {
+      const res = await fetch("http://localhost:8080/cropmgr_app/Api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(backendPayload)
@@ -315,12 +315,12 @@ export default function ManagerDashboard() {
   const updateUserStatus = async (id: number, newStatus: FarmerUser["status"] | "deleted") => {
     try {
       if (newStatus === "deleted") {
-        await fetch(`http://localhost:8081/cropmgr_app/Api/users/${id}`, { method: "DELETE" });
+        await fetch(`http://localhost:8080/cropmgr_app/Api/users/${id}`, { method: "DELETE" });
         setFarmers(farmers.filter(f => f.id !== id));
         if (selectedFarmer?.id === id) setSelectedFarmer(null);
       } else {
         const backendStatus = newStatus.toUpperCase();
-        await fetch(`http://localhost:8081/cropmgr_app/Api/users/${id}/status?status=${backendStatus}`, { method: "PUT" });
+        await fetch(`http://localhost:8080/cropmgr_app/Api/users/${id}/status?status=${backendStatus}`, { method: "PUT" });
         const updated = farmers.map(f => f.id === id ? { ...f, status: newStatus as FarmerUser["status"] } : f);
         setFarmers(updated);
         if (selectedFarmer?.id === id) setSelectedFarmer({ ...selectedFarmer, status: newStatus as FarmerUser["status"] });
@@ -332,7 +332,7 @@ export default function ManagerDashboard() {
 
   const approveCrop = async (cropId: number, farmerId: number) => {
     try {
-      await fetch(`http://localhost:8082/cropmgr_app/api/crops/${cropId}/status?status=APPROVED`, {
+      await fetch(`http://localhost:8080/cropmgr_app/api/crops/${cropId}/status?status=APPROVED`, {
         method: "PUT"
       });
       setFarmers(farmers.map(f => {
@@ -376,7 +376,7 @@ export default function ManagerDashboard() {
 
   try {
     const response = await fetch(
-      "http://localhost:8083/cropmgr_app/api/comms",
+      "http://localhost:8080/cropmgr_app/api/comms",
       {
         method: "POST",
         headers: {
