@@ -12,12 +12,10 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import DashboardBackground from "../../components/DashboardBackground";
+import LoadingPanel from "../../components/LoadingPanel";
+import Select3D from "@/src/components/Select3D";
 
 /* ═══════ MOCK DATA ═══════ */
-const stats = [
-  { label: "Total Yield", value: "12,840 kg", change: "+8.2%", up: true, icon: Wheat },
-  { label: "Active Fields", value: "14", change: "+2", up: true, icon: MapPin },
-];
 
 const initialCrops: any[] = [];
 
@@ -60,14 +58,22 @@ function MiniChart({ data, color = "#22c55e" }: { data: number[]; color?: string
 }
 
 /* ═══════ DONUT CHART SVG ═══════ */
-function DonutChart() {
-  const segments = [
-    { label: "Rice", value: 42, color: "#22c55e" },
-    { label: "Tea", value: 28, color: "#eab308" },
-    { label: "Vegetables", value: 18, color: "#3b82f6" },
-    { label: "Other", value: 12, color: "#a855f7" },
-  ];
-  const total = segments.reduce((s, seg) => s + seg.value, 0);
+function DonutChart({ activeCrops }: { activeCrops: any[] }) {
+  if (!activeCrops || activeCrops.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-36">
+        <span className="text-zinc-500 text-sm">No crops available</span>
+      </div>
+    );
+  }
+
+  const counts: Record<string, number> = {};
+  activeCrops.forEach(c => { counts[c.name] = (counts[c.name] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const colors = ["#22c55e", "#eab308", "#3b82f6", "#a855f7", "#ef4444", "#f97316"];
+  const segments = sorted.map(([label, value], i) => ({ label, value, color: colors[i % colors.length] }));
+  
+  const total = activeCrops.length;
   let cum = 0;
   const r = 40;
   const c = 2 * Math.PI * r;
@@ -96,16 +102,16 @@ function DonutChart() {
           })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl text-zinc-900 dark:text-white font-normal font-gelasio">{total}%</span>
-          <span className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest">Allocation</span>
+          <span className="text-2xl text-zinc-900 dark:text-white font-normal font-gelasio">{total}</span>
+          <span className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest">Crops</span>
         </div>
       </div>
       <div className="flex flex-col gap-3">
         {segments.map((seg, i) => (
           <div key={i} className="flex items-center gap-3">
-            <div className="w-2 h-2" style={{ backgroundColor: seg.color }} />
-            <span className="text-xs text-zinc-600 dark:text-white/60 font-light">{seg.label}</span>
-            <span className="text-xs text-zinc-800 dark:text-white/80 ml-auto">{seg.value}%</span>
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: seg.color }} />
+            <span className="text-xs text-zinc-600 dark:text-white/60 font-light truncate max-w-[80px]">{seg.label}</span>
+            <span className="text-xs text-zinc-800 dark:text-white/80 ml-auto">{Math.round((seg.value / total) * 100)}%</span>
           </div>
         ))}
       </div>
@@ -118,47 +124,21 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState("overview");
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const dragControls = useDragControls();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [selectedDateFilter, setSelectedDateFilter] = useState("All Time");
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
   const [activeCrops, setActiveCrops] = useState(initialCrops);
-  const [activeNotifications, setActiveNotifications] = useState(initialNotifications);
   
   const [cropSearchTerm, setCropSearchTerm] = useState("");
   const [cropSortField, setCropSortField] = useState<"name" | "status" | "health">("name");
   const [cropSortDir, setCropSortDir] = useState<"asc" | "desc">("asc");
   
-  const isDateInFilter = (dateString: string, filter: string) => {
-    if (!dateString) return true;
-    const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (filter === "Today") {
-      return date.toDateString() === today.toDateString();
-    } else if (filter === "Yesterday") {
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      return date.toDateString() === yesterday.toDateString();
-    } else if (filter === "Last 7 Days") {
-      const last7 = new Date(today);
-      last7.setDate(last7.getDate() - 7);
-      return date >= last7;
-    } else if (filter === "This Month") {
-      return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
-    } else if (filter === "This Year") {
-      return date.getFullYear() === today.getFullYear();
-    }
-    return true; // For any other value like "All Time"
-  };
-
   const filteredSortedCrops = activeCrops
-    .filter(c => isDateInFilter(c.planted, selectedDateFilter))
     .filter(c => c.name.toLowerCase().includes(cropSearchTerm.toLowerCase()) || c.field.toLowerCase().includes(cropSearchTerm.toLowerCase()))
     .sort((a, b) => {
       let cmp = 0;
@@ -177,24 +157,67 @@ export default function DashboardPage() {
   // Profile Edit State
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
-    id: 1,
+    id: 0,
     firstName: "Loading...", lastName: "", username: "", email: "", phone: "+94 7X XXX XXXX",
-    nic: "", age: "", address: "N/A", type: "N/A",
+    nic: "", age: "", address: "N/A", addressLine: "", area: "", district: "", province: "", country: "", type: "N/A",
     role: "", // ADDED ROLE HERE
     teamSize: "1", memberSince: "Recently", password: ""
   });
 
+  const locationData: Record<string, string[]> = {
+    "Central": ["Kandy", "Matale", "Nuwara Eliya"],
+    "Eastern": ["Ampara", "Batticaloa", "Trincomalee"],
+    "North Central": ["Anuradhapura", "Polonnaruwa"],
+    "North Western": ["Kurunegala", "Puttalam"],
+    "Northern": ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"],
+    "Sabaragamuwa": ["Kegalle", "Ratnapura"],
+    "Southern": ["Galle", "Hambantota", "Matara"],
+    "Uva": ["Badulla", "Monaragala"],
+    "Western": ["Colombo", "Gampaha", "Kalutara"]
+  };
+
   // Chat State
   const [chatOpen, setChatOpen] = useState(false);
   const [donutKey, setDonutKey] = useState(0);
-  const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: "Manager", text: "Hello John, any updates on Field A-01? Let me know if you need assistance.", time: "09:00 AM" }
-  ]);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const fetchMessages = async () => {
+  if (profileData.id === 0) return;
+
+  try {
+    const response = await fetch(
+      `http://localhost:8083/cropmgr_app/api/comms/${profileData.id}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to load messages");
+    }
+
+    const data = await response.json();
+
+    const mappedMessages = data.map((message: any) => ({
+      id: message.id,
+      sender: message.senderRole === "FARMER" ? "You" : "Manager",
+      text: message.content,
+      time: message.sentAt
+        ? new Date(message.sentAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "",
+    }));
+
+    setChatMessages(mappedMessages);
+  } catch (error) {
+    console.error("Failed to fetch messages:", error);
+  }
+};
+
   useEffect(() => { 
-    setMounted(true); 
+    setMounted(true);
+
     
     // Attempt to retrieve the saved session from localStorage
     const savedUserStr = localStorage.getItem("cropAssistUser");
@@ -209,6 +232,26 @@ export default function DashboardPage() {
           return;
         }
 
+        // Handle address parsing carefully, since addressLine itself might have commas
+        const addressParts = (user.address || "").split(",").map((p: string) => p.trim());
+        const addressLen = addressParts.length;
+        
+        let parsedCountry = "Sri Lanka";
+        let parsedProvince = "";
+        let parsedDistrict = "";
+        let parsedArea = "";
+        let parsedAddressLine = user.address || "";
+
+        if (addressLen >= 5) {
+          parsedCountry = addressParts[addressLen - 1];
+          parsedProvince = addressParts[addressLen - 2];
+          parsedDistrict = addressParts[addressLen - 3];
+          parsedArea = addressParts[addressLen - 4];
+          parsedAddressLine = addressParts.slice(0, addressLen - 4).join(", ");
+        } else if (addressLen > 0) {
+           parsedAddressLine = addressParts[0];
+        }
+
         // Map the database user object to the local profileData state
         setProfileData({
           id: user.id,
@@ -220,12 +263,19 @@ export default function DashboardPage() {
           nic: user.nic || "",
           age: (user.age || "").toString(),
           address: user.address || "N/A", 
+          addressLine: parsedAddressLine,
+          area: parsedArea,
+          district: parsedDistrict,
+          province: parsedProvince,
+          country: parsedCountry,
           type: user.farmingType || "N/A",
           role: user.role || "FARMER",
           teamSize: (user.teamSize || 1).toString(),
           memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
           password: ""
         });
+        // Dashboard is ready, hide loading panel
+        setTimeout(() => setDashboardLoading(false), 800);
       } catch (err) {
         console.error("Failed to parse user session", err);
         router.push("/login"); // Redirect to login if session is corrupted
@@ -235,6 +285,22 @@ export default function DashboardPage() {
       router.push("/login");
     }
   }, [router]);
+
+  useEffect(() => {
+    if (profileData.id !== 0) {
+        fetchMessages();
+    }
+}, [profileData.id]);
+
+useEffect(() => {
+    if (profileData.id === 0) return;
+
+    const interval = setInterval(() => {
+        fetchMessages();
+    }, 2000);
+
+    return () => clearInterval(interval);
+}, [profileData.id]);
   
   useEffect(() => {
     if (chatOpen && chatEndRef.current) {
@@ -253,7 +319,7 @@ export default function DashboardPage() {
         nic: profileData.nic,
         age: parseInt(profileData.age) || null,
         phone: profileData.phone,
-        address: profileData.address,
+        address: `${profileData.addressLine || ''}, ${profileData.area || ''}, ${profileData.district || ''}, ${profileData.province || ''}, ${profileData.country || ''}`,
         passwordHash: profileData.password ? profileData.password : "pending_setup",
         farmingType: profileData.type,
         teamSize: parseInt(profileData.teamSize) || 1,
@@ -261,7 +327,7 @@ export default function DashboardPage() {
         status: "ACTIVE"
       };
       try {
-        await fetch("http://localhost:8081/Api/users", {
+        await fetch("http://localhost:8081/cropmgr_app/Api/users", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -272,6 +338,38 @@ export default function DashboardPage() {
     }
     setIsEditingProfile(!isEditingProfile);
   };
+
+  const fetchCrops = async () => {
+    try {
+      const res = await fetch("http://localhost:8082/cropmgr_app/api/crops");
+      if (res.ok) {
+        const data = await res.json();
+        // Filter crops for the logged-in farmer
+        const userCrops = data.filter((c: any) => c.farmerId === profileData.id);
+        const mapped = userCrops.map((c: any) => ({
+          id: c.id,
+          name: c.name || "",
+          field: c.fieldLocation || "",
+          status: (c.status || "Growing").charAt(0).toUpperCase() + (c.status || "Growing").slice(1).toLowerCase(),
+          health: c.healthPercentage || 100,
+          area: `${c.areaSize || 0} ${c.areaUnit || "ha"}`,
+          planted: c.plantedDate || "",
+          harvest: c.expectedHarvestDate || "",
+        }));
+        setActiveCrops(mapped);
+      }
+    } catch (err) {
+      console.error("Failed to fetch crops", err);
+    }
+  };
+
+  useEffect(() => {
+    if (profileData.id !== 0) { // 0 is default loading id
+      fetchCrops();
+      const intervalId = setInterval(fetchCrops, 5000);
+      return () => clearInterval(intervalId);
+    }
+  }, [profileData.id]);
 
   const openAddCrop = () => {
     setEditingCropId(null);
@@ -288,34 +386,97 @@ export default function DashboardPage() {
     setCropModalOpen(true);
   };
 
-  const handleSaveCrop = (e: React.FormEvent) => {
+  const handleSaveCrop = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingCropId) {
-      setActiveCrops(activeCrops.map(c => c.id === editingCropId ? { ...cropForm, id: editingCropId } : c));
-    } else {
-      setActiveCrops([...activeCrops, { ...cropForm, id: Date.now() }]);
+    
+    // Extract numeric area and unit from "2.5 ha"
+    const parsedArea = parseFloat(cropForm.area.toString().replace(/[^0-9.]/g, '')) || 0;
+    const unit = cropForm.area.toString().replace(/[0-9.\s]/g, '') || "ha";
+
+    const payload = {
+      farmerId: profileData.id,
+      name: cropForm.name,
+      fieldLocation: cropForm.field,
+      status: cropForm.status.toUpperCase(),
+      healthPercentage: cropForm.health,
+      areaSize: parsedArea,
+      areaUnit: unit,
+      plantedDate: cropForm.planted || new Date().toISOString().split('T')[0],
+      expectedHarvestDate: cropForm.harvest || new Date().toISOString().split('T')[0],
+      ...(editingCropId ? { id: editingCropId } : {})
+    };
+
+    try {
+      if (editingCropId) {
+        await fetch("http://localhost:8082/cropmgr_app/api/crops", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await fetch("http://localhost:8082/cropmgr_app/api/crops", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      }
+      fetchCrops(); // Refresh list from server
+      setCropModalOpen(false);
+      setCropForm(defaultCrop);
+    } catch (err) {
+      console.error("Failed to save crop", err);
     }
-    setCropModalOpen(false);
-    setCropForm(defaultCrop);
   };
 
-  const deleteCrop = (id: number) => {
-    setActiveCrops(activeCrops.filter(c => c.id !== id));
+  const deleteCrop = async (id: number) => {
+    try {
+      await fetch(`http://localhost:8082/cropmgr_app/api/crops/${id}`, { method: "DELETE" });
+      fetchCrops(); // Refresh list from server
+    } catch (err) {
+      console.error("Failed to delete crop", err);
+    }
   };
 
-  const dismissNotification = (id: number) => {
-    setActiveNotifications(activeNotifications.filter(n => n.id !== id));
+  const [dismissedNotifs, setDismissedNotifs] = useState<string[]>([]);
+
+  const dismissNotification = (id: number, text: string) => {
+    setDismissedNotifs([...dismissedNotifs, text]);
   };
 
-  const handleSendMsg = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMsg.trim()) return;
-    setChatMessages(prev => [...prev, { id: Date.now(), sender: "You", text: newMsg, time: "Just now" }]);
+  const handleSendMsg = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  const messageText = newMsg.trim();
+
+  if (!messageText || profileData.id === 0) return;
+
+  try {
+    const response = await fetch(
+      "http://localhost:8083/cropmgr_app/api/comms",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          farmerId: profileData.id,
+          senderRole: "FARMER",
+          content: messageText,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to send message");
+    }
+
     setNewMsg("");
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { id: Date.now(), sender: "Manager", text: "Received! I will check on this and get back to you.", time: "Just now" }]);
-    }, 1500);
-  };
+    fetchMessages();
+
+  } catch (error) {
+    console.error("Failed to send message:", error);
+  }
+};
 
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -324,6 +485,58 @@ export default function DashboardPage() {
       transition: { delay: i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }
     })
   };
+
+  const totalArea = activeCrops.reduce((acc, c) => {
+    const val = parseFloat(c.area.toString().replace(/[^0-9.]/g, '')) || 0;
+    return acc + val;
+  }, 0).toFixed(2);
+  
+  const avgHealth = activeCrops.length > 0 
+    ? Math.round(activeCrops.reduce((acc, c) => acc + (c.health || 0), 0) / activeCrops.length) 
+    : 0;
+
+  const dynamicStats = [
+    { label: "Total Area Planted", value: `${totalArea} ha`, icon: MapPin },
+    { label: "Average Health", value: `${avgHealth}%`, icon: Leaf },
+    { label: "Active Crops", value: activeCrops.length.toString(), icon: Sprout },
+  ];
+
+  // Derived Notifications
+  const derivedNotifications: any[] = [];
+  let notifId = 1;
+
+  activeCrops.filter(c => c.health < 60).forEach(c => {
+    derivedNotifications.push({
+      id: notifId++,
+      text: `Low health alert: ${c.name} in ${c.field} is at ${c.health}% health.`,
+      time: "Just now",
+      icon: Bug
+    });
+  });
+
+  activeCrops.filter(c => c.status.toLowerCase() === "ready for harvest").forEach(c => {
+    derivedNotifications.push({
+      id: notifId++,
+      text: `Harvest ready: ${c.name} in ${c.field} is ready for harvest.`,
+      time: "Just now",
+      icon: Calendar
+    });
+  });
+
+  // Check messages for latest from manager
+  if (chatMessages.length > 0) {
+    const lastMsg = chatMessages[chatMessages.length - 1];
+    if (lastMsg.sender === "Manager") {
+      derivedNotifications.push({
+        id: notifId++,
+        text: `New message from Manager: "${lastMsg.text.slice(0, 30)}${lastMsg.text.length > 30 ? '...' : ''}"`,
+        time: lastMsg.time || "Just now",
+        icon: MessageSquare
+      });
+    }
+  }
+
+  const visibleNotifications = derivedNotifications.filter(n => !dismissedNotifs.includes(n.text));
 
   return (
     <div className="flex min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans font-light transition-colors duration-500 relative overflow-x-hidden">
@@ -343,12 +556,12 @@ export default function DashboardPage() {
         >
           <div className="flex flex-col h-full">
             <div className="flex items-center gap-3 mb-10 h-10 px-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-sm text-white shadow-lg flex-shrink-0">
-                JF
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-sm text-white shadow-lg flex-shrink-0 uppercase">
+                {profileData.firstName?.charAt(0) || "F"}{profileData.lastName?.charAt(0) || "U"}
               </div>
               {isSidebarOpen && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1">
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">{profileData.fullName}</p>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">{`${profileData.firstName} ${profileData.lastName}`.trim()}</p>
                   <p className="text-[10px] text-zinc-500 dark:text-white/40 truncate w-32">{profileData.email}</p>
                 </motion.div>
               )}
@@ -424,14 +637,14 @@ export default function DashboardPage() {
 
             
             <div className="relative">
-              <button onClick={() => setActiveDropdown(activeDropdown === 'profile' ? null : 'profile')} className="w-9 h-9 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-xs text-white shadow-md rounded-full hover:scale-105 transition-transform">
-                JF
+              <button onClick={() => setActiveDropdown(activeDropdown === 'profile' ? null : 'profile')} className="w-9 h-9 bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-xs text-white shadow-md rounded-full hover:scale-105 transition-transform uppercase">
+                {profileData.firstName?.charAt(0) || "F"}{profileData.lastName?.charAt(0) || "U"}
               </button>
               <AnimatePresence>
                 {activeDropdown === 'profile' && (
                   <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-56 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-3xl shadow-2xl py-2 z-50 overflow-hidden">
                     <div className="px-4 py-3 border-b border-zinc-200 dark:border-white/10 mb-2">
-                      <p className="text-sm font-semibold text-zinc-900 dark:text-white">{profileData.fullName}</p>
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-white">{`${profileData.firstName} ${profileData.lastName}`.trim()}</p>
                       <p className="text-[10px] text-zinc-500 dark:text-white/50 truncate">{profileData.email}</p>
                     </div>
                     <button onClick={() => {setActiveDropdown(null); setActiveNav('profile');}} className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-3 text-zinc-600 dark:text-white/70 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors"><User size={14}/> View Profile</button>
@@ -449,29 +662,35 @@ export default function DashboardPage() {
           <div className="flex-1 flex flex-col gap-8 pb-24">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-normal font-gelasio tracking-wide capitalize text-zinc-900 dark:text-white">{activeNav}</h1>
-              <div className="relative z-20">
-                <button onClick={() => setActiveDropdown(activeDropdown === 'date' ? null : 'date')} className="flex items-center gap-3 px-4 py-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors group cursor-pointer border border-transparent hover:border-zinc-300 dark:hover:border-white/20">
-                  <span className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{selectedDateFilter}</span>
-                  <Calendar size={14} className="text-zinc-500 dark:text-white/40 group-hover:text-green-500 transition-colors" strokeWidth={1.5} />
-                </button>
-                <AnimatePresence>
-                  {activeDropdown === 'date' && (
-                    <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-48 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50">
-                      {["Today", "Yesterday", "Last 7 Days", "This Month", "This Year", "All Time"].map(t => (
-                        <button key={t} onClick={() => {setSelectedDateFilter(t); setActiveDropdown(null);}} className={`w-full text-left px-4 py-2.5 text-xs ${selectedDateFilter === t ? 'text-green-500 bg-zinc-100 dark:bg-white/5' : 'text-zinc-600 dark:text-white/70'} hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors`}>{t}</button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
             </div>
 
             <AnimatePresence mode="wait">
               {/* ════════ OVERVIEW TAB ════════ */}
               {activeNav === "overview" && (
                 <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {stats.map((stat, i) => {
+                  
+                  {/* DIRECT APPROVAL NOTIFICATION BANNER */}
+                  {activeCrops.filter(c => c.status === "Approved").length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-3xl flex items-center justify-between shadow-lg shadow-emerald-500/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                          <Check size={24} />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-gelasio text-emerald-700 dark:text-emerald-400">Good News! You have approved crops.</h3>
+                          <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80 mt-1">
+                            <strong className="font-semibold">{activeCrops.filter(c => c.status === "Approved").map(c => c.name).join(", ")}</strong> {activeCrops.filter(c => c.status === "Approved").length > 1 ? "have" : "has"} been officially approved by the manager!
+                          </p>
+                        </div>
+                      </div>
+                      <button onClick={() => setActiveNav('crops')} className="px-5 py-2.5 bg-emerald-500 text-white text-xs uppercase tracking-widest rounded-lg hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20">
+                        View Crops
+                      </button>
+                    </motion.div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {dynamicStats.map((stat, i) => {
                       const Icon = stat.icon;
                       return (
                         <motion.div key={i} custom={i} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/60 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-6 rounded-3xl hover:border-green-500/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)] transition-all duration-500 group shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
@@ -479,18 +698,13 @@ export default function DashboardPage() {
                             <span className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest">{stat.label}</span>
                             <Icon size={16} className="text-zinc-400 dark:text-white/20 group-hover:text-green-500 dark:group-hover:text-green-400 transition-colors" strokeWidth={1.5} />
                           </div>
-                          <p className="text-2xl text-zinc-900 dark:text-white font-normal font-gelasio mb-2">{stat.value}</p>
-                          <div className={`flex items-center gap-1 text-xs ${stat.up ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}`}>
-                            {stat.up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                            {stat.change}
-                            <span className="text-zinc-400 dark:text-white/30 ml-1">vs last month</span>
-                          </div>
+                          <p className="text-3xl text-zinc-900 dark:text-white font-normal font-gelasio mb-2">{stat.value}</p>
                         </motion.div>
                       );
                     })}
                   </div>
 
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <motion.div custom={2} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/60 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-8 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.1)] transition-shadow duration-500">
                       <div className="flex items-center justify-between mb-8 relative z-20">
                         <h3 className="text-lg font-gelasio text-zinc-900 dark:text-white">Crop Distribution</h3>
@@ -508,24 +722,8 @@ export default function DashboardPage() {
                           </AnimatePresence>
                         </div>
                       </div>
-                      <DonutChart key={donutKey} />
-                    </motion.div>
-
-                    <motion.div custom={3} initial="hidden" animate="visible" variants={fadeIn} className="bg-white/70 dark:bg-[#0c0c0e]/60 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-8 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.1)] transition-shadow duration-500">
-                      <div className="flex items-center justify-between mb-6">
-                        <div>
-                          <h3 className="text-lg font-gelasio text-zinc-900 dark:text-white">Total Yield</h3>
-                          <p className="text-xs text-zinc-500 dark:text-white/40 mt-1">January — December 2026</p>
-                        </div>
-                        <p className="text-2xl font-gelasio text-green-600 dark:text-green-400">12,840 <span className="text-xs text-zinc-500 dark:text-white/40">kg</span></p>
-                      </div>
-                      <div className="h-20">
-                        <MiniChart data={yieldData} />
-                      </div>
-                      <div className="flex justify-between mt-3">
-                        {months.map((m, i) => (
-                          <span key={i} className="text-[9px] text-zinc-400 dark:text-white/20">{m}</span>
-                        ))}
+                      <div className="flex justify-center w-full">
+                        <DonutChart key={donutKey} activeCrops={activeCrops} />
                       </div>
                     </motion.div>
                   </div>
@@ -568,6 +766,7 @@ export default function DashboardPage() {
                                   crop.status === "Growing" ? "text-green-600 dark:text-green-400 border-green-500/20 bg-green-500/10 dark:bg-green-500/5" :
                                   crop.status === "Harvesting" ? "text-yellow-600 dark:text-yellow-400 border-yellow-500/20 bg-yellow-500/10 dark:bg-yellow-500/5" :
                                   crop.status === "Seedling" ? "text-blue-600 dark:text-blue-400 border-blue-500/20 bg-blue-500/10 dark:bg-blue-500/5" :
+                                  crop.status === "Approved" ? "text-emerald-600 dark:text-emerald-400 border-emerald-500/20 bg-emerald-500/10 dark:bg-emerald-500/5 font-medium" :
                                   "text-purple-600 dark:text-purple-400 border-purple-500/20 bg-purple-500/10 dark:bg-purple-500/5"
                                 }`}>{crop.status}</span>
                               </td>
@@ -588,6 +787,7 @@ export default function DashboardPage() {
                   </motion.div>
                 </motion.div>
               )}
+
 
               {/* ════════ CROPS TAB ════════ */}
               {activeNav === "crops" && (
@@ -638,7 +838,9 @@ export default function DashboardPage() {
                             <span className={
                               crop.status === "Growing" ? "text-green-600 dark:text-green-400" :
                               crop.status === "Harvesting" ? "text-yellow-600 dark:text-yellow-400" :
-                              crop.status === "Seedling" ? "text-blue-600 dark:text-blue-400" : "text-purple-600 dark:text-purple-400"
+                              crop.status === "Seedling" ? "text-blue-600 dark:text-blue-400" :
+                              crop.status === "Approved" ? "text-emerald-600 dark:text-emerald-400 font-medium" :
+                              "text-purple-600 dark:text-purple-400"
                             }>{crop.status}</span>
                           </div>
                           <div className="flex justify-between"><span>Planted</span><span className="text-zinc-800 dark:text-white/70">{crop.planted}</span></div>
@@ -718,20 +920,40 @@ export default function DashboardPage() {
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {[
-                            { key: "address", label: "Farm Address", value: profileData.address },
-                            { key: "type", label: "Farming Type", value: profileData.type },
-                            { key: "teamSize", label: "Team Size", value: profileData.teamSize },
-                            { key: "memberSince", label: "Member Since", value: profileData.memberSince, readOnly: true },
+                            { key: "country", label: "Country", value: profileData.country, type: "select", options: ["Sri Lanka"] },
+                            { key: "province", label: "Province", value: profileData.province, type: "select", options: Object.keys(locationData) },
+                            { key: "district", label: "District", value: profileData.district, type: "select", options: locationData[profileData.province] || [] },
+                            { key: "area", label: "Area / Town", value: profileData.area, type: "text" },
+                            { key: "addressLine", label: "Street Address", value: profileData.addressLine, type: "text" },
+                            { key: "type", label: "Farming Type", value: profileData.type, type: "text" },
+                            { key: "teamSize", label: "Team Size", value: profileData.teamSize, type: "text" },
+                            { key: "memberSince", label: "Member Since", value: profileData.memberSince, type: "text", readOnly: true },
                           ].map((field) => (
                             <div key={field.key} className="border-b border-zinc-200 dark:border-white/5 pb-3">
                               <p className="text-[10px] text-zinc-500 dark:text-white/30 uppercase tracking-widest mb-2">{field.label}</p>
                               {isEditingProfile && !field.readOnly ? (
-                                <input 
-                                  type="text"
-                                  value={field.value}
-                                  onChange={(e) => setProfileData({...profileData, [field.key]: e.target.value})}
-                                  className="w-full bg-transparent border-b border-green-500/50 pb-1 outline-none text-sm text-zinc-900 dark:text-white font-gelasio focus:border-green-400 transition-colors"
-                                />
+                                field.type === "select" ? (
+                                  <Select3D 
+                                    value={field.value} 
+                                    options={field.options || []} 
+                                    onChange={(val) => {
+                                      if (field.key === "province") {
+                                        setProfileData({...profileData, province: val, district: ""});
+                                      } else {
+                                        setProfileData({...profileData, [field.key]: val});
+                                      }
+                                    }} 
+                                    placeholder={`Select ${field.label}`} 
+                                    className="border-b border-green-500/50 pb-1 text-zinc-900 dark:text-white font-gelasio"
+                                  />
+                                ) : (
+                                  <input 
+                                    type="text"
+                                    value={field.value}
+                                    onChange={(e) => setProfileData({...profileData, [field.key]: e.target.value})}
+                                    className="w-full bg-transparent border-b border-green-500/50 pb-1 outline-none text-sm text-zinc-900 dark:text-white font-gelasio focus:border-green-400 transition-colors"
+                                  />
+                                )
                               ) : (
                                 <p className="text-sm text-zinc-900 dark:text-white/80 font-gelasio">{field.value}</p>
                               )}
@@ -779,24 +1001,27 @@ export default function DashboardPage() {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2, duration: 0.5 }} className="bg-white/70 dark:bg-white/[0.02] backdrop-blur-md border border-zinc-200/50 dark:border-white/5 p-6 shadow-sm dark:shadow-none">
               <h3 className="text-sm font-gelasio mb-6 flex items-center justify-between text-zinc-900 dark:text-white">
                 Notifications
-                <span className="text-[10px] text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5">{activeNotifications.length}</span>
+                <span className="text-[10px] text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5">{visibleNotifications.length}</span>
               </h3>
               <div className="flex flex-col gap-4">
-                {activeNotifications.length === 0 && (
+                {visibleNotifications.length === 0 && (
                   <p className="text-xs text-zinc-500 dark:text-white/40">You're all caught up!</p>
                 )}
-                {activeNotifications.map((n) => {
+                {visibleNotifications.map((n) => {
                   const Icon = n.icon;
                   return (
-                    <div key={n.id} onClick={() => dismissNotification(n.id)} className="flex items-start gap-3 group cursor-pointer">
-                      <div className="w-8 h-8 bg-zinc-100 dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-green-500/10 transition-colors shadow-sm dark:shadow-none">
-                        <Icon size={14} className="text-zinc-400 dark:text-white/40 group-hover:text-green-500 dark:group-hover:text-green-400 transition-colors" strokeWidth={1.5} />
+                    <motion.div key={n.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3 group relative">
+                      <div className="mt-1 flex-shrink-0">
+                        <Icon size={14} className="text-zinc-400 dark:text-white/40" />
                       </div>
-                      <div>
-                        <p className="text-xs text-zinc-700 dark:text-white/70 leading-relaxed group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{n.text}</p>
+                      <div className="pr-4">
+                        <p className="text-xs text-zinc-700 dark:text-white/80 leading-relaxed">{n.text}</p>
                         <p className="text-[10px] text-zinc-400 dark:text-white/30 mt-1">{n.time}</p>
                       </div>
-                    </div>
+                      <button onClick={() => dismissNotification(n.id, n.text)} className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1">
+                        <X size={12} />
+                      </button>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -906,6 +1131,7 @@ export default function DashboardPage() {
                       <option value="Growing" className="bg-white text-black">Growing</option>
                       <option value="Mature" className="bg-white text-black">Mature</option>
                       <option value="Harvesting" className="bg-white text-black">Harvesting</option>
+                      <option value="Approved" className="bg-white text-black" disabled={cropForm.status !== "Approved"}>Approved (Manager Only)</option>
                     </select>
                   </div>
                   <div>
@@ -1009,6 +1235,12 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* ═══════ LOADING PANEL ═══════ */}
+      <LoadingPanel
+        isVisible={dashboardLoading}
+        message="Loading Your Farm Dashboard"
+      />
     </div>
   );
 }

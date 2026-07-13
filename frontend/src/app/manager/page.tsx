@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import DashboardBackground from "../../components/DashboardBackground";
+import LoadingPanel from "../../components/LoadingPanel";
 
 /* ═══════ TYPES ═══════ */
 interface FarmerUser {
@@ -63,6 +64,7 @@ export default function ManagerDashboard() {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [isNavOpen, setIsNavOpen] = useState(true);
   
@@ -85,14 +87,40 @@ export default function ManagerDashboard() {
   
   // Messages state
   const [chatFarmer, setChatFarmer] = useState<FarmerUser | null>(null);
-  const [allMessages, setAllMessages] = useState<ChatMessage[]>([
-    { id: 1, sender: "John Farmer", text: "Field A-01 moisture is dropping. Please advise.", time: "09:15 AM", farmerId: 1 },
-    { id: 2, sender: "Manager", text: "Increase irrigation cycle to 2x daily.", time: "09:20 AM", farmerId: 1 },
-    { id: 3, sender: "Nimali Perera", text: "Cinnamon harvest ready. Need transport.", time: "10:00 AM", farmerId: 2 },
-    { id: 4, sender: "Kamal Silva", text: "Pest detected in coconut field E-04.", time: "11:30 AM", farmerId: 3 },
-  ]);
+  const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const fetchMessages = async () => {
+  try {
+    const response = await fetch(
+      `http://localhost:8083/cropmgr_app/api/comms`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch messages");
+    }
+
+    const data = await response.json();
+
+    const mapped = data.map((m: any) => ({
+      id: m.id,
+      sender: m.senderRole === "MANAGER" ? "Manager" : "Farmer",
+      text: m.content,
+      time: m.sentAt
+        ? new Date(m.sentAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "",
+      farmerId: m.farmerId,
+    }));
+
+    setAllMessages(mapped);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   useEffect(() => { 
     setMounted(true);
@@ -115,42 +143,105 @@ export default function ManagerDashboard() {
       return;
     }
     
-    // Fetch users from backend (as this is the Manager page, we need all users)
-    fetch("http://localhost:8081/Api/users")
-      .then(res => res.json())
-      .then(data => {
-        if(Array.isArray(data)) {
-          const loadedFarmers: FarmerUser[] = data.map((u: any) => ({
-            id: u.id,
-            name: u.fullName || "Unknown",
-            email: u.email || "",
-            username: u.username || "",
-            phone: u.phone || "N/A",
-            nic: u.nic || "",
-            age: (u.age || "").toString(),
-            address: u.address || "N/A",
-            role: u.role || "FARMER",
-            memberSince: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
-            status: u.status ? u.status.toLowerCase() as FarmerUser["status"] : "pending",
-            teamSize: u.teamSize || 1,
-            crops: []
-          }));
+    const fetchDashboardData = () => {
+      Promise.all([
+        fetch("http://localhost:8081/cropmgr_app/Api/users").then(res => res.json()),
+        fetch("http://localhost:8082/cropmgr_app/api/crops").then(res => res.json())
+      ])
+      .then(([usersData, cropsData]) => {
+        if (Array.isArray(usersData)) {
+          const allCrops = Array.isArray(cropsData) ? cropsData : [];
+          const loadedFarmers: FarmerUser[] = usersData.map((u: any) => {
+            const userCrops = allCrops.filter(c => c.farmerId === u.id).map(c => ({
+              id: c.id,
+              name: c.name || "",
+              field: c.fieldLocation || "",
+              status: (c.status || "Growing").charAt(0).toUpperCase() + (c.status || "Growing").slice(1).toLowerCase(),
+              health: c.healthPercentage || 100,
+              area: `${c.areaSize || 0} ${c.areaUnit || "ha"}`,
+              planted: c.plantedDate || "",
+              harvest: c.expectedHarvestDate || "",
+              tags: []
+            }));
+  
+            return {
+              id: u.id,
+              name: u.fullName || "Unknown",
+              email: u.email || "",
+              username: u.username || "",
+              phone: u.phone || "N/A",
+              nic: u.nic || "",
+              age: (u.age || "").toString(),
+              address: u.address || "N/A",
+              role: u.role || "FARMER",
+              memberSince: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
+              status: u.status ? u.status.toLowerCase() as FarmerUser["status"] : "pending",
+              teamSize: u.teamSize || 1,
+              crops: userCrops
+            };
+          });
           
           setFarmers(loadedFarmers);
+          setDashboardLoading(false);
+          
+          // Generate real-time notifications
+          const newNotifications: any[] = [];
+          let notifId = 1;
+          
+          // Notification for pending farmers
+          const pendingFarmers = loadedFarmers.filter(f => f.status === "pending");
+          if (pendingFarmers.length > 0) {
+            newNotifications.push({ id: notifId++, text: `${pendingFarmers.length} farmer(s) waiting for approval.` });
+          }
+          
+          // Notifications for crops needing attention
+          const lowHealthCrops = allCrops.filter(c => c.healthPercentage < 50);
+          if (lowHealthCrops.length > 0) {
+            newNotifications.push({ id: notifId++, text: `${lowHealthCrops.length} crop(s) have critically low health.` });
+          }
+          
+          const readyToHarvest = allCrops.filter(c => c.status && c.status.toLowerCase() === "ready for harvest");
+          if (readyToHarvest.length > 0) {
+             newNotifications.push({ id: notifId++, text: `${readyToHarvest.length} crop(s) are ready for harvest.` });
+          }
+          
+          setAdminNotifications(newNotifications);
         }
       })
-      .catch(err => console.error("Failed to fetch backend users:", err));
+      .catch(err => {
+        console.error("Failed to fetch backend data:", err);
+        setDashboardLoading(false);
+      });
+    };
+
+    // Initial fetch
+    fetchDashboardData();
+    fetchMessages(); // Load all messages initially
+
+    // Set up real-time polling
+    const intervalId = setInterval(() => {
+      fetchDashboardData();
+      fetchMessages(); // Continuously sync all messages
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
+
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [allMessages, chatFarmer]);
 
   // Derived Stats
+  const totalArea = farmers.flatMap(f => f.crops).reduce((acc, c) => {
+    const val = parseFloat(c.area.toString().replace(/[^0-9.]/g, '')) || 0;
+    return acc + val;
+  }, 0).toFixed(2);
+
   const managerStats = [
-    { label: "Total Farmers", value: farmers.length.toString(), change: "+2", up: true, icon: Users, color: "green" },
-    { label: "Active Crops", value: farmers.flatMap(f => f.crops).length.toString(), change: "+3", up: true, icon: Sprout, color: "green" },
-    { label: "Pending Approvals", value: farmers.filter(f => f.status === "pending").length.toString(), change: "0", up: false, icon: Shield, color: "red" },
-    { label: "Total Fields", value: "23 ha", change: "+4.2", up: true, icon: MapPin, color: "green" },
+    { label: "Total Farmers", value: farmers.length.toString(), icon: Users, color: "green" },
+    { label: "Active Crops", value: farmers.flatMap(f => f.crops).length.toString(), icon: Sprout, color: "green" },
+    { label: "Pending Approvals", value: farmers.filter(f => f.status === "pending").length.toString(), icon: Shield, color: "red" },
+    { label: "Total Fields", value: `${totalArea} ha`, icon: MapPin, color: "green" },
   ];
 
   // Filtered & sorted farmers
@@ -167,41 +258,11 @@ export default function ManagerDashboard() {
     });
 
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [selectedDateFilter, setSelectedDateFilter] = useState("All Time");
-  const [adminNotifications, setAdminNotifications] = useState([
-    { id: 1, text: "A new farmer requested approval." },
-    { id: 2, text: "System backup completed successfully." },
-    { id: 3, text: "High server load detected in region Asia-South." }
-  ]);
-
-  const isDateInFilter = (dateString: string, filter: string) => {
-    if (!dateString) return true;
-    const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (filter === "Today") {
-      return date.toDateString() === today.toDateString();
-    } else if (filter === "Yesterday") {
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      return date.toDateString() === yesterday.toDateString();
-    } else if (filter === "Last 7 Days") {
-      const last7 = new Date(today);
-      last7.setDate(last7.getDate() - 7);
-      return date >= last7;
-    } else if (filter === "This Month") {
-      return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
-    } else if (filter === "This Year") {
-      return date.getFullYear() === today.getFullYear();
-    }
-    return true; // For any other value like "All Time"
-  };
+  const [adminNotifications, setAdminNotifications] = useState<any[]>([]);
 
   // All crops from all farmers
   const allCrops = farmers.flatMap(f => f.crops.map(c => ({ ...c, farmerName: f.name, farmerId: f.id })));
   const filteredCrops = allCrops
-    .filter(c => isDateInFilter(c.date, selectedDateFilter))
     .filter(c => cropUserFilter === "all" || c.farmerId === cropUserFilter)
     .filter(c => c.name.toLowerCase().includes(cropSearch.toLowerCase()) || c.field.toLowerCase().includes(cropSearch.toLowerCase()) || c.tags?.some(t => t.toLowerCase().includes(cropSearch.toLowerCase())));
 
@@ -227,7 +288,7 @@ export default function ManagerDashboard() {
     };
 
     try {
-      const res = await fetch("http://localhost:8081/Api/users", {
+      const res = await fetch("http://localhost:8081/cropmgr_app/Api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(backendPayload)
@@ -254,12 +315,12 @@ export default function ManagerDashboard() {
   const updateUserStatus = async (id: number, newStatus: FarmerUser["status"] | "deleted") => {
     try {
       if (newStatus === "deleted") {
-        await fetch(`http://localhost:8081/Api/users/${id}`, { method: "DELETE" });
+        await fetch(`http://localhost:8081/cropmgr_app/Api/users/${id}`, { method: "DELETE" });
         setFarmers(farmers.filter(f => f.id !== id));
         if (selectedFarmer?.id === id) setSelectedFarmer(null);
       } else {
         const backendStatus = newStatus.toUpperCase();
-        await fetch(`http://localhost:8081/Api/users/${id}/status?status=${backendStatus}`, { method: "PUT" });
+        await fetch(`http://localhost:8081/cropmgr_app/Api/users/${id}/status?status=${backendStatus}`, { method: "PUT" });
         const updated = farmers.map(f => f.id === id ? { ...f, status: newStatus as FarmerUser["status"] } : f);
         setFarmers(updated);
         if (selectedFarmer?.id === id) setSelectedFarmer({ ...selectedFarmer, status: newStatus as FarmerUser["status"] });
@@ -269,16 +330,23 @@ export default function ManagerDashboard() {
     }
   };
 
-  const approveCrop = (cropId: number, farmerId: number) => {
-    setFarmers(farmers.map(f => {
-      if (f.id === farmerId) {
-        return {
-          ...f,
-          crops: f.crops.map(c => c.id === cropId ? { ...c, status: "Approved" } : c)
-        };
-      }
-      return f;
-    }));
+  const approveCrop = async (cropId: number, farmerId: number) => {
+    try {
+      await fetch(`http://localhost:8082/cropmgr_app/api/crops/${cropId}/status?status=APPROVED`, {
+        method: "PUT"
+      });
+      setFarmers(farmers.map(f => {
+        if (f.id === farmerId) {
+          return {
+            ...f,
+            crops: f.crops.map(c => c.id === cropId ? { ...c, status: "Approved" } : c)
+          };
+        }
+        return f;
+      }));
+    } catch (err) {
+      console.error("Failed to approve crop:", err);
+    }
   };
 
   const handleAddTag = (cropId: number, farmerId: number) => {
@@ -301,12 +369,37 @@ export default function ManagerDashboard() {
     else { setSortField(field); setSortDir("asc"); }
   };
 
-  const handleSendMsg = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMsg.trim() || !chatFarmer) return;
-    setAllMessages(prev => [...prev, { id: Date.now(), sender: "Manager", text: newMsg, time: "Just now", farmerId: chatFarmer.id }]);
+  const handleSendMsg = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!newMsg.trim() || !chatFarmer) return;
+
+  try {
+    const response = await fetch(
+      "http://localhost:8083/cropmgr_app/api/comms",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          farmerId: chatFarmer.id,
+          senderRole: "MANAGER",
+          content: newMsg.trim(),
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to send message");
+    }
+
     setNewMsg("");
-  };
+    await fetchMessages();
+  } catch (error) {
+    console.error("Failed to send manager message:", error);
+  }
+};
 
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -457,21 +550,6 @@ export default function ManagerDashboard() {
             <div>
               <h1 className="text-3xl font-gelasio tracking-wide text-zinc-900 dark:text-white">Manager Dashboard</h1>
               <p className="text-xs text-zinc-500 dark:text-white/40 mt-1 uppercase tracking-widest">Agricultural Enterprise Management</p>
-            </div>
-            <div className="relative z-20">
-              <button onClick={() => setActiveDropdown(activeDropdown === 'date' ? null : 'date')} className="flex items-center gap-3 px-4 py-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors group cursor-pointer border border-transparent hover:border-zinc-300 dark:hover:border-white/20">
-                <Calendar size={14} className="text-zinc-500 dark:text-white/40 group-hover:text-green-500 transition-colors" strokeWidth={1.5} />
-                <span className="text-xs text-zinc-500 dark:text-white/40 uppercase tracking-widest group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{selectedDateFilter}</span>
-              </button>
-              <AnimatePresence>
-                {activeDropdown === 'date' && (
-                  <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-2 w-48 bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50">
-                    {["Today", "Yesterday", "Last 7 Days", "This Month", "This Year", "All Time"].map(t => (
-                      <button key={t} onClick={() => { setSelectedDateFilter(t); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-xs ${selectedDateFilter === t ? 'text-green-500 bg-zinc-100 dark:bg-white/5' : 'text-zinc-600 dark:text-white/70'} hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-green-500 transition-colors`}>{t}</button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </div>
 
@@ -936,6 +1014,12 @@ export default function ManagerDashboard() {
           );
         })}
       </div>
+
+      {/* ═══════ LOADING PANEL ═══════ */}
+      <LoadingPanel
+        isVisible={dashboardLoading}
+        message="Loading Manager Dashboard"
+      />
     </div>
   );
 }

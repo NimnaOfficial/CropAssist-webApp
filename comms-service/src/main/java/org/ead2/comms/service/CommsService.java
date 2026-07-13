@@ -1,8 +1,29 @@
 package org.ead2.comms.service;
 
-/**
- * CommsService is intended to handle the core business logic for the Communication Service.
- * In the future, this should be annotated with @Service and contain methods to interact with the CommsRepository.
- */
+import org.ead2.comms.data.Comms;
+import org.ead2.comms.data.CommsRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
 public class CommsService {
+
+    @Autowired
+    private CommsRepository commsRepository;
+
+    public Comms saveMessage(Comms message) {
+        message.setSentAt(LocalDateTime.now());
+        return commsRepository.save(message);
+    }
+
+    public List<Comms> getMessagesByFarmer(Long farmerId) {
+        return commsRepository.findByFarmerIdOrderBySentAtAsc(farmerId);
+    }
+
+    public List<Comms> getAllMessages() {
+        return commsRepository.findAll();
+    }
 }
