@@ -130,7 +130,20 @@ CropAssist is proudly built and maintained by the following engineers:
 - 👨‍💻 **Nimna** 
 - 👨‍💻 **Huwin**
 - 👨‍💻 **Vidura**
-- 👨‍💻 **Dulans**
+- 👨‍💻 **Dulan**
+
+---
+
+<div align="center">
+  <h2>⚖️ Legal & Licensing</h2>
+  
+  <blockquote>
+    <b>🚨 STRICTLY PROPRIETARY & CONFIDENTIAL 🚨</b><br/>
+    This software is protected by a highly strict Proprietary End-User License Agreement (EULA). <br/>
+    <b>NO ONE</b> is permitted to copy, edit, distribute, run, or reverse-engineer this project under any combination or permutation of circumstances without the explicit, signed, written permission of the core contributors.<br/> 
+    Any unauthorized use will be met with maximum legal action. Please refer to the <code>LICENSE</code> file in the root directory for the full legal terms.
+  </blockquote>
+</div>
 
 ---
 *Built with ❤️ for the Future of Smart Agriculture.*
