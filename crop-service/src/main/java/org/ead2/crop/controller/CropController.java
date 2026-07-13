@@ -10,7 +10,6 @@ import java.util.List;
  * CropController is intended to handle HTTP requests for the Crop Service.
  * Currently, it is a placeholder for future endpoint implementations (e.g., adding, updating, or deleting crops).
  */
-@CrossOrigin(origins = "*") // Allows the frontend to communicate with this controller from any origin (e.g. localhost:3000)
 @RequestMapping(path = "/api") // Base URL path for all endpoints in this controller
 @RestController // Marks this class as a REST API controller that automatically serializes responses to JSON
 

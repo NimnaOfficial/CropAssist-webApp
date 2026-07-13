@@ -20,19 +20,4 @@ public class AppConfig {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Configures Global Cross-Origin Resource Sharing (CORS).
-     * This prevents the browser from blocking requests when the frontend (localhost:3000)
-     * tries to communicate with this backend (localhost:8081).
-     */
-    @Bean
-    public org.springframework.web.servlet.config.annotation.WebMvcConfigurer corsConfigurer() {
-        return new org.springframework.web.servlet.config.annotation.WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
-                // Allow all paths (/**), from any origin (*), using any HTTP method (*), with any headers (*)
-                registry.addMapping("/**").allowedOrigins("*").allowedMethods("*").allowedHeaders("*");
-            }
-        };
-    }
 }

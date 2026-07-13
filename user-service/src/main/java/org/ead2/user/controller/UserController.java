@@ -14,7 +14,7 @@ import java.util.List;
  * UserController handles all incoming HTTP requests related to User operations.
  * It acts as the bridge between the frontend (React/Next.js) and the backend business logic (UserService).
  */
-@CrossOrigin(origins = "*") // Allows the frontend to communicate with this controller from any origin (e.g. localhost:3000)
+
 @RequestMapping(path = "/Api") // Base URL path for all endpoints in this controller
 @RestController // Marks this class as a REST API controller that automatically serializes responses to JSON
 public class UserController {
@@ -113,7 +113,7 @@ public class UserController {
      * @param loginRequest A DTO containing the user's email/NIC and password.
      * @return A 200 OK with the User object if successful, or a 401 UNAUTHORIZED if credentials fail.
      */
-    @CrossOrigin(origins = "*") // Redundant but explicitly added to ensure CORS works for this specific POST mapping
+    
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {

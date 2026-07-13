@@ -188,7 +188,7 @@ export default function DashboardPage() {
 
   try {
     const response = await fetch(
-      `http://localhost:8083/cropmgr_app/api/comms/${profileData.id}`
+      `http://localhost:8080/cropmgr_app/api/comms/${profileData.id}`
     );
 
     if (!response.ok) {
@@ -320,14 +320,14 @@ useEffect(() => {
         age: parseInt(profileData.age) || null,
         phone: profileData.phone,
         address: `${profileData.addressLine || ''}, ${profileData.area || ''}, ${profileData.district || ''}, ${profileData.province || ''}, ${profileData.country || ''}`,
-        passwordHash: profileData.password ? profileData.password : "pending_setup",
+        passwordHash: profileData.password ? profileData.password : (JSON.parse(localStorage.getItem("cropAssistUser") || "{}").passwordHash || "pending_setup"),
         farmingType: profileData.type,
         teamSize: parseInt(profileData.teamSize) || 1,
         role: (profileData as any).role || "FARMER",
         status: "ACTIVE"
       };
       try {
-        await fetch("http://localhost:8081/cropmgr_app/Api/users", {
+        await fetch("http://localhost:8080/cropmgr_app/Api/users", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -341,7 +341,7 @@ useEffect(() => {
 
   const fetchCrops = async () => {
     try {
-      const res = await fetch("http://localhost:8082/cropmgr_app/api/crops");
+      const res = await fetch("http://localhost:8080/cropmgr_app/api/crops");
       if (res.ok) {
         const data = await res.json();
         // Filter crops for the logged-in farmer
@@ -408,13 +408,13 @@ useEffect(() => {
 
     try {
       if (editingCropId) {
-        await fetch("http://localhost:8082/cropmgr_app/api/crops", {
+        await fetch("http://localhost:8080/cropmgr_app/api/crops", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
       } else {
-        await fetch("http://localhost:8082/cropmgr_app/api/crops", {
+        await fetch("http://localhost:8080/cropmgr_app/api/crops", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -430,7 +430,7 @@ useEffect(() => {
 
   const deleteCrop = async (id: number) => {
     try {
-      await fetch(`http://localhost:8082/cropmgr_app/api/crops/${id}`, { method: "DELETE" });
+      await fetch(`http://localhost:8080/cropmgr_app/api/crops/${id}`, { method: "DELETE" });
       fetchCrops(); // Refresh list from server
     } catch (err) {
       console.error("Failed to delete crop", err);
@@ -452,7 +452,7 @@ useEffect(() => {
 
   try {
     const response = await fetch(
-      "http://localhost:8083/cropmgr_app/api/comms",
+      "http://localhost:8080/cropmgr_app/api/comms",
       {
         method: "POST",
         headers: {
