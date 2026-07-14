@@ -127,10 +127,10 @@ Navigate to `http://localhost:3000` to access the application.
 
 CropAssist is proudly built and maintained by the following engineers:
 
-- 👨‍💻 **Nimna** 
-- 👨‍💻 **Huwin**
-- 👨‍💻 **Vidura**
-- 👨‍💻 **Dulan**
+- 👨‍💻 **[Dulan](https://github.com/DulanDhanush)**
+- 👨‍💻 **[Nimna](https://github.com/NimnaOfficial)** 
+- 👨‍💻 **[Huwin](https://github.com/Huwinfenando)**
+- 👨‍💻 **[Vidura](https://github.com/ushanp02-maker)**
 
 ---
 
