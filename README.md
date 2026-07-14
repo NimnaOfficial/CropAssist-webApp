@@ -71,7 +71,7 @@ Follow these steps precisely to initialize the enterprise environment on your lo
 ### 1️⃣ Prerequisites
 - **Java 17 (JDK 17)** or higher
 - **Node.js 20+** and `npm`
-- **MySQL 8.0+** Database Server
+- **MySQL 5.7+** Database Server
 - **Maven 3.9+**
 
 ### 2️⃣ Database Initialization
