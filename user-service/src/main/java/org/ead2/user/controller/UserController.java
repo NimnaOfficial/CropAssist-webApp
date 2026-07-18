@@ -44,6 +44,7 @@ import org.ead2.user.data.User;
 
 // LoginRequest: A DTO (Data Transfer Object) that holds login credentials (email/username + password).
 //   Used by the login endpoint to receive the login data from the frontend.
+import org.ead2.user.dto.ChangeCredentialsRequest;
 import org.ead2.user.dto.LoginRequest;
 
 // UserService: The service layer class that contains all the business logic.
@@ -312,6 +313,26 @@ public class UserController {
     @PutMapping(path = "/users/{id}/status")
     public User updateUserStatus(@PathVariable Long id, @RequestParam User.Status status) {
         return userService.updateUserStatus(id, status);
+    }
+
+    /**
+     * Endpoint for farmers to change their temporary username and password.
+     * This is called after a farmer logs in for the first time with auto-generated credentials.
+     * @param request Contains the user's ID, new username, and new password.
+     * @return The updated User object if successful, or an error message if something went wrong.
+     */
+    @PutMapping(path = "/users/change-credentials")
+    public ResponseEntity<?> changeCredentials(@RequestBody ChangeCredentialsRequest request) {
+        try {
+            User updatedUser = userService.changeCredentials(
+                    request.getId(),
+                    request.getNewUsername(),
+                    request.getNewPassword()
+            );
+            return ResponseEntity.ok(updatedUser);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     /**

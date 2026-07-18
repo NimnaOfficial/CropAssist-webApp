@@ -55,6 +55,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 //   ever want to switch to a different hashing method, we only need to change this one file.
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import org.springframework.web.client.RestTemplate;
+
 /**
  * @Configuration — Tells Spring: "This class is a configuration class."
  *   Spring will scan this class at startup and execute all methods marked with @Bean
@@ -88,6 +90,15 @@ public class AppConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * restTemplate() — Creates and returns a RestTemplate bean.
+     * We use this to make HTTP calls to other microservices.
+     */
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 
 }

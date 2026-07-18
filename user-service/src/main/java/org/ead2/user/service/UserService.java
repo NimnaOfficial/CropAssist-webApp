@@ -40,6 +40,9 @@ package org.ead2.user.service;
 //   in a broken state. If anything goes wrong, all changes are rolled back (undone).
 import jakarta.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 // User: Our custom data model class representing a user. Needed because this service
 //   creates, reads, updates, and returns User objects.
 import org.ead2.user.data.User;
@@ -62,9 +65,14 @@ import org.springframework.stereotype.Service;
 // List: A Java collection that holds an ordered list of items.
 //   Used here to return a list of all users from gettAllUsers().
 import java.util.List;
-
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.util.HashMap;
+import java.util.Map;
 /**
- * @Service — Tells Spring: "This class is a SERVICE — it contains business logic."
+ *  @Service — Tells Spring: "This class is a SERVICE — it contains business logic."
  *   When Spring starts up, it automatically creates ONE instance of this class and
  *   stores it in its container. Whenever another class (like UserController) needs
  *   a UserService, Spring provides this instance automatically (dependency injection).
@@ -83,71 +91,76 @@ public class UserService {
      *   "final" means this value is set once in the constructor and never changes.
      */
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RestTemplate restTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
+    // The URL of the mail-service endpoint for sending credentials emails
+    // mail-service runs on port 8084 with context path /cropmgr_app
+    private static final String MAIL_SERVICE_URL = "http://localhost:8084/cropmgr_app/api/mail/send-credentials";
 
-    /**
-     * passwordEncoder — A reference to the password hashing tool (BCryptPasswordEncoder).
-     *   This is used to:
-     *     1. Hash (scramble) passwords before saving them to the database
-     *     2. Verify passwords during login (compare typed password with stored hash)
-     *   "final" means this value is set once in the constructor and never changes.
-     *   The actual BCryptPasswordEncoder object is created in AppConfig.java.
-     */
-    private final PasswordEncoder passwordEncoder ;   // <-- add this
-
-    /**
-     * Constructor — Creates a new UserService with the required dependencies.
-     *
-     * WHAT IT DOES:
-     *   Receives the UserRepository and PasswordEncoder from Spring (via dependency injection)
-     *   and stores them as fields so all methods in this class can use them.
-     *
-     * HOW DEPENDENCY INJECTION WORKS HERE:
-     *   We don't create these objects ourselves. Spring sees that this constructor needs
-     *   a UserRepository and a PasswordEncoder, so it automatically finds the matching
-     *   beans (objects) it created earlier and passes them in:
-     *     - UserRepository: Auto-created by Spring Data JPA
-     *     - PasswordEncoder: Created by the passwordEncoder() method in AppConfig.java
-     *
-     * @param userRepository  — The database helper, automatically provided by Spring.
-     * @param passwordEncoder — The password hashing tool, automatically provided by Spring.
-     */
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder ){
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RestTemplate restTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-
+        this.restTemplate = restTemplate;
     }
 
     /**
-     * createUser() — Registers a new user in the system.
-     *
-     * WHAT IT DOES:
-     *   1. Takes the user's raw (plain-text) password from the passwordHash field
-     *   2. Hashes (scrambles) it using BCrypt so it's stored securely
-     *   3. Saves the complete user object to the database
-     *   4. Returns the saved user (now with a database-generated ID and hashed password)
-     *
-     * WHY WE HASH THE PASSWORD:
-     *   We NEVER store plain-text passwords. If the database is ever hacked, the attackers
-     *   would only see scrambled hashes like "$2a$10$N9qo8uL..." — not the actual passwords.
-     *   BCrypt hashing is a ONE-WAY process: you can turn a password into a hash, but you
-     *   CANNOT turn the hash back into the password.
-     *
-     * @param user — The User object from the frontend. The passwordHash field initially
-     *               contains the RAW password (e.g., "myPassword123"). After this method
-     *               processes it, it will contain the BCrypt HASH.
-     * @return The saved User object with a generated ID and hashed password.
+     * Creates a new user in the database.
+     * If the password is "pending_setup" (meaning a manager created this user),
+     * we auto-generate temporary credentials and send them via email.
+     * If the user signed up themselves, we just hash their chosen password normally.
      */
     public User createUser(User user) {
-        // Take the raw password, hash it with BCrypt, and replace the plain-text password with the hash.
-        // user.getPasswordHash() at this point returns the RAW password from the frontend.
-        // passwordEncoder.encode() converts it to a BCrypt hash string.
-        // user.setPasswordHash() stores the hash back, overwriting the raw password.
-        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        // Check if this user was created by a manager (password will be "pending_setup")
+        if ("pending_setup".equals(user.getPasswordHash())) {
+            // Generate a temporary username from the user's name and NIC
+            String tempUsername = generateTempUsername(user.getFullName(), user.getNic());
+            // Generate a temporary password from the user's name and NIC
+            String tempPassword = generateTempPassword(user.getFullName(), user.getNic());
 
-        // Save the user to the database. The repository's save() method either INSERTs a new row
-        // (if the user doesn't exist yet) or UPDATEs an existing row (if the ID already exists).
-        return userRepository.save(user);
+            // Set the generated username
+            user.setUsername(tempUsername);
+            // Hash the temporary password before saving to the database
+            user.setPasswordHash(passwordEncoder.encode(tempPassword));
+            // Mark that this user MUST change their credentials on first login
+            user.setMustChangePassword(true);
+
+            // Save the user to the database first
+            User savedUser = userRepository.save(user);
+
+            // Try to send the temporary credentials via the mail-service microservice
+            try {
+                // Build the request body that the mail-service expects
+                Map<String, String> mailRequest = new HashMap<>();
+                mailRequest.put("toEmail", user.getEmail());
+                mailRequest.put("fullName", user.getFullName());
+                mailRequest.put("tempUsername", tempUsername);
+                mailRequest.put("tempPassword", tempPassword);
+
+                // Set the Content-Type header to JSON
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                // Create the HTTP request with body and headers
+                HttpEntity<Map<String, String>> request = new HttpEntity<>(mailRequest, headers);
+
+                // Send a POST request to the mail-service
+                restTemplate.postForObject(MAIL_SERVICE_URL, request, String.class);
+
+                logger.info("Temporary credentials email request sent to mail-service for: {}", user.getEmail());
+            } catch (Exception e) {
+                // If mail-service is down or fails, log it but don't crash - the user is already created
+                logger.error("Failed to send credentials email via mail-service for {}: {}", user.getEmail(), e.getMessage());
+            }
+
+            return savedUser;
+        } else {
+            // Normal signup flow - user provided their own password
+            user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+            user.setMustChangePassword(false);
+            return userRepository.save(user);
+        }
     }
 
     /**
@@ -348,6 +361,69 @@ public class UserService {
         }
         // All checks passed! Return the user object (login successful)
         return this.userRepository.findByEmailOrUsername(emailOrUsername);   // or return a JWT token if you plan to use it
+    }
+
+    /**
+     * Changes a user's username and password.
+     * This is called when a farmer logs in for the first time with temporary credentials
+     * and is forced to set their own username and password.
+     */
+    @Transactional
+    public User changeCredentials(Long id, String newUsername, String newPassword) {
+        // Find the user by their ID
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        // Update the username to the farmer's chosen one
+        user.setUsername(newUsername);
+        // Hash the new password with BCrypt before saving
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        // Remove the forced password change flag so they can use the app normally
+        user.setMustChangePassword(false);
+        // Activate the account since they've now set up their credentials
+        user.setStatus(User.Status.ACTIVE);
+
+        return userRepository.save(user);
+    }
+
+    /**
+     * Generates a temporary username from the user's name and NIC.
+     * Example: fullName="Nimna Sandanayake", NIC="200012345678" → "nimna5678"
+     */
+    private String generateTempUsername(String fullName, String nic) {
+        // Take the first name and make it lowercase
+        String firstName = "user";
+        if (fullName != null && !fullName.isEmpty()) {
+            firstName = fullName.split(" ")[0].toLowerCase();
+        }
+
+        // Take the last 4 characters of the NIC
+        String nicSuffix = "0000";
+        if (nic != null && nic.length() >= 4) {
+            nicSuffix = nic.substring(nic.length() - 4);
+        }
+
+        return firstName + nicSuffix;
+    }
+
+    /**
+     * Generates a temporary password from the user's name and NIC.
+     * Example: fullName="Nimna Sandanayake", NIC="200012345678" → "NIM@5678!"
+     */
+    private String generateTempPassword(String fullName, String nic) {
+        // Take the first 3 characters of the name in UPPERCASE
+        String namePrefix = "USR";
+        if (fullName != null && fullName.length() >= 3) {
+            namePrefix = fullName.substring(0, 3).toUpperCase();
+        }
+
+        // Take the last 4 characters of the NIC
+        String nicSuffix = "0000";
+        if (nic != null && nic.length() >= 4) {
+            nicSuffix = nic.substring(nic.length() - 4);
+        }
+
+        return namePrefix + "@" + nicSuffix + "!";
     }
 
 }

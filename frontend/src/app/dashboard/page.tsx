@@ -8,7 +8,8 @@ import {
   LayoutDashboard, Sprout, User, Search, Sun, Moon, Bell, LogOut,
   Wheat, ArrowUpRight, ArrowDownRight, Leaf, MapPin, Calendar, 
   ChevronRight, MoreHorizontal, Plus, Edit, Trash2, Droplets, Users, BarChart3, Bug,
-  MessageSquare, Send, X, Check, PanelLeftClose, PanelLeftOpen, Download, Settings, RefreshCw, FileText, Share2, HelpCircle
+  MessageSquare, Send, X, Check, PanelLeftClose, PanelLeftOpen, Download, Settings, RefreshCw, FileText, Share2, HelpCircle,
+  Lock, ArrowRight
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import DashboardBackground from "../../components/DashboardBackground";
@@ -128,6 +129,12 @@ export default function DashboardPage() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const dragControls = useDragControls();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  // Forced credential change states (for first-time login with temp credentials)
+  const [showCredentialChange, setShowCredentialChange] = useState(false);
+  const [credentialForm, setCredentialForm] = useState({ newUsername: "", newPassword: "", confirmPassword: "" });
+  const [credentialError, setCredentialError] = useState("");
+  const [credentialLoading, setCredentialLoading] = useState(false);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -274,6 +281,10 @@ export default function DashboardPage() {
           memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently",
           password: ""
         });
+        // Check if the user must change their temporary credentials
+        if (user.mustChangePassword) {
+          setShowCredentialChange(true);
+        }
         // Dashboard is ready, hide loading panel
         setTimeout(() => setDashboardLoading(false), 800);
       } catch (err) {
@@ -337,6 +348,59 @@ useEffect(() => {
       }
     }
     setIsEditingProfile(!isEditingProfile);
+  };
+
+  const handleCredentialChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredentialError("");
+
+    // Validate that both fields are filled
+    if (!credentialForm.newUsername.trim() || !credentialForm.newPassword.trim()) {
+      setCredentialError("Please fill in both username and password.");
+      return;
+    }
+
+    // Validate password length
+    if (credentialForm.newPassword.length < 6) {
+      setCredentialError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    // Validate passwords match
+    if (credentialForm.newPassword !== credentialForm.confirmPassword) {
+      setCredentialError("Passwords do not match.");
+      return;
+    }
+
+    setCredentialLoading(true);
+
+    try {
+      const res = await fetch("http://localhost:8080/cropmgr_app/Api/users/change-credentials", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: profileData.id,
+          newUsername: credentialForm.newUsername,
+          newPassword: credentialForm.newPassword
+        })
+      });
+
+      if (res.ok) {
+        const updatedUser = await res.json();
+        // Update localStorage with the new user data
+        localStorage.setItem("cropAssistUser", JSON.stringify(updatedUser));
+        // Update the profile data with new username
+        setProfileData(prev => ({ ...prev, username: updatedUser.username }));
+        // Hide the credential change modal
+        setShowCredentialChange(false);
+      } else {
+        setCredentialError("Failed to update credentials. Please try again.");
+      }
+    } catch (err) {
+      setCredentialError("Failed to connect to the server.");
+    } finally {
+      setCredentialLoading(false);
+    }
   };
 
   const fetchCrops = async () => {
@@ -1235,6 +1299,108 @@ useEffect(() => {
           );
         })}
       </div>
+
+      {/* ═══════ FORCED CREDENTIAL CHANGE MODAL ═══════ */}
+      <AnimatePresence>
+        {showCredentialChange && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center"
+          >
+            {/* Dark overlay - cannot be clicked to dismiss */}
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+            
+            {/* Modal card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="relative w-full max-w-md mx-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-2xl"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-zinc-200 dark:border-white/10 bg-gradient-to-r from-green-500/10 to-transparent">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-green-500/20 flex items-center justify-center">
+                    <Lock size={20} className="text-green-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Set Up Your Credentials</h2>
+                    <p className="text-xs text-zinc-500 dark:text-white/50">Required before accessing your dashboard</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <form onSubmit={handleCredentialChange} className="p-6 flex flex-col gap-5">
+                <div className="bg-amber-500/10 border border-amber-500/30 p-3">
+                  <p className="text-xs text-amber-600 dark:text-amber-400">Your manager created your account with temporary credentials. Please choose your own username and password to continue.</p>
+                </div>
+
+                {credentialError && (
+                  <div className="bg-red-500/10 border border-red-500/30 p-3">
+                    <p className="text-xs text-red-500">{credentialError}</p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1.5 block">New Username</label>
+                  <div className="relative">
+                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-white/30" />
+                    <input
+                      type="text"
+                      required
+                      value={credentialForm.newUsername}
+                      onChange={(e) => setCredentialForm({ ...credentialForm, newUsername: e.target.value })}
+                      placeholder="Choose a username"
+                      className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 pl-10 pr-4 py-2.5 text-sm text-zinc-900 dark:text-white outline-none focus:border-green-500/50 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1.5 block">New Password</label>
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-white/30" />
+                    <input
+                      type="password"
+                      required
+                      value={credentialForm.newPassword}
+                      onChange={(e) => setCredentialForm({ ...credentialForm, newPassword: e.target.value })}
+                      placeholder="At least 6 characters"
+                      className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 pl-10 pr-4 py-2.5 text-sm text-zinc-900 dark:text-white outline-none focus:border-green-500/50 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-widest mb-1.5 block">Confirm Password</label>
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-white/30" />
+                    <input
+                      type="password"
+                      required
+                      value={credentialForm.confirmPassword}
+                      onChange={(e) => setCredentialForm({ ...credentialForm, confirmPassword: e.target.value })}
+                      placeholder="Re-enter your password"
+                      className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 pl-10 pr-4 py-2.5 text-sm text-zinc-900 dark:text-white outline-none focus:border-green-500/50 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={credentialLoading}
+                  className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white py-3 flex items-center justify-center gap-2 text-sm uppercase tracking-widest transition-colors disabled:opacity-50"
+                >
+                  {credentialLoading ? "Saving..." : "Save & Continue"}
+                  {!credentialLoading && <ArrowRight size={16} />}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ═══════ LOADING PANEL ═══════ */}
       <LoadingPanel
