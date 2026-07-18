@@ -103,8 +103,10 @@ export default function LoginPage() {
         // Save the authenticated user session to localStorage so other pages (like dashboard) can use it
         localStorage.setItem("cropAssistUser", JSON.stringify(user));
         
-        // Show loading panel and redirect after animation
-        if (user.role === "MANAGER") {
+        // Check if user must change their temporary credentials first
+        if (user.mustChangePassword) {
+          navigateDestRef.current = "/dashboard";
+        } else if (user.role === "MANAGER") {
           navigateDestRef.current = "/manager";
         } else {
           navigateDestRef.current = "/dashboard";

@@ -228,6 +228,10 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    /** Flag that forces the user to change their username and password on first login */
+    @Column(name = "must_change_password")
+    private Boolean mustChangePassword = false;
+
     /**
      * Default (no-argument) constructor.
      *
@@ -263,8 +267,9 @@ public class User {
      * @param status       — Their account status (PENDING, ACTIVE, INACTIVE, SUSPENDED).
      * @param createdAt    — When the account was created.
      * @param updatedAt    — When the account was last updated.
+     * @param mustChangePassword — Whether the user must change their credentials on first login.
      */
-    public User(Long id, String fullName, String username, String email, String nic, String passwordHash, String phone, String address, Integer age, String farmingType, Integer teamSize, String role, Status status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public User(Long id, String fullName, String username, String email, String nic, String passwordHash, String phone, String address, Integer age, String farmingType, Integer teamSize, String role, Status status, LocalDateTime createdAt, LocalDateTime updatedAt, Boolean mustChangePassword) {
         this.id = id;
         this.fullName = fullName;
         this.username = username;
@@ -280,6 +285,7 @@ public class User {
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.mustChangePassword = mustChangePassword;
     }
 
     // =====================================================================================
@@ -418,6 +424,14 @@ public class User {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 
     /**
