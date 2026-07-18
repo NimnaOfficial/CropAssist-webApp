@@ -18,7 +18,7 @@ public class MailController {
         this.mailService = mailService;
     }
 
-    @PostMapping("/send-credentials")
+    @PostMapping("/sendCredentials")
     public ResponseEntity<String> sendCredentials(@RequestBody MailRequest request) {
         try {
             mailService.sendTemporaryCredentials(request);

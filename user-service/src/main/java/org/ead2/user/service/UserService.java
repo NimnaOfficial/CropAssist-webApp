@@ -97,7 +97,7 @@ public class UserService {
 
     // The URL of the mail-service endpoint for sending credentials emails
     // mail-service runs on port 8084 with context path /cropmgr_app
-    private static final String MAIL_SERVICE_URL = "http://localhost:8084/cropmgr_app/api/mail/send-credentials";
+    private static final String MAIL_SERVICE_URL = "http://localhost:8084/cropmgr_app/api/mail/sendCredentials";
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RestTemplate restTemplate) {
         this.userRepository = userRepository;
