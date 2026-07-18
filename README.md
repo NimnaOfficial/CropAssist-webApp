@@ -39,16 +39,20 @@ graph TD
         UserService["👤 User Service (Port 8081)"]
         CropService["🌾 Crop Service (Port 8082)"]
         CommsService["💬 Comms Service (Port 8083)"]
+        MailService["📧 Mail Service (Port 8084)"]
     end
 
     Client -->|HTTP REST| API_GW
     API_GW -->|/cropmgr_app/Api/users/**| UserService
     API_GW -->|/cropmgr_app/api/crops/**| CropService
     API_GW -->|/cropmgr_app/api/comms/**| CommsService
+    API_GW -->|/cropmgr_app/api/mail/**| MailService
 
     UserService --> User_DB
+    UserService -->|"POST /send-credentials"| MailService
     CropService --> Crop_DB
     CommsService --> Comms_DB
+    MailService -->|"SMTP"| Gmail["📨 Gmail Server"]
 ```
 
 ---
@@ -57,9 +61,10 @@ graph TD
 
 | Module | Features & Capabilities |
 | :--- | :--- |
-| **User Service** | Secure BCrypt password hashing, Farmer/Manager role segregation, National Identity Card (NIC) validations. |
+| **User Service** | Secure BCrypt password hashing, Farmer/Manager role segregation, National Identity Card (NIC) validations, Forced First-Login Credential Change. |
 | **Crop Service** | Real-time yield tracking, harvest estimations, active health monitoring, status lifecycles. |
 | **Comms Service** | Instant chat relay between Farmers & Managers, localized dashboard notifications, read receipts. |
+| **Mail Service** | Independent SMTP engine, auto-generates & emails temporary credentials to new users, highly scalable. |
 | **Frontend UI** | iOS-style 3D dropdowns, dynamic derived state notifications, intelligent search & filtering, fully responsive. |
 
 ---
@@ -97,6 +102,7 @@ The backend utilizes Maven's multi-module architecture. You must start the API g
    - **User Service:** `cd user-service && mvn spring-boot:run`
    - **Crop Service:** `cd crop-service && mvn spring-boot:run`
    - **Comms Service:** `cd comms-service && mvn spring-boot:run`
+   - **Mail Service:** `cd mail-service && mvn spring-boot:run`
 
 ### 4️⃣ Bootstrapping the Frontend
 The Next.js client requires dependencies to be resolved before spinning up the development server.
