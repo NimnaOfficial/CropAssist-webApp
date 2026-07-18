@@ -237,9 +237,7 @@ export default function LoginPage() {
                 </div>
                 <span className="text-sm text-white/60 group-hover:text-white/90 transition-colors font-light tracking-wide">Remember me</span>
               </label>
-              <Link href="#" className="text-sm text-white/60 hover:text-green-400 transition-colors font-light tracking-wide">
-                Forgot password?
-              </Link>
+
             </div>
 
             <motion.button

@@ -321,7 +321,7 @@ public class UserController {
      * @param request Contains the user's ID, new username, and new password.
      * @return The updated User object if successful, or an error message if something went wrong.
      */
-    @PutMapping(path = "/users/change-credentials")
+    @PutMapping(path = "/users/changeCredentials")
     public ResponseEntity<?> changeCredentials(@RequestBody ChangeCredentialsRequest request) {
         try {
             User updatedUser = userService.changeCredentials(

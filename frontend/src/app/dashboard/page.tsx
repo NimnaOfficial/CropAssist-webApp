@@ -375,7 +375,7 @@ useEffect(() => {
     setCredentialLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8080/cropmgr_app/Api/users/change-credentials", {
+      const res = await fetch("http://localhost:8080/cropmgr_app/Api/users/changeCredentials", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
