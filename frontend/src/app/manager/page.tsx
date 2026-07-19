@@ -78,6 +78,7 @@ export default function ManagerDashboard() {
   
   // Add User State
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isSubmittingUser, setIsSubmittingUser] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", phone: "", nic: "", address: "" });
   
   // Crops state
@@ -272,6 +273,7 @@ export default function ManagerDashboard() {
   
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmittingUser(true);
     const backendPayload = {
       fullName: newUser.name,
       username: (newUser as any).username || newUser.name.split(" ")[0].toLowerCase(),
@@ -309,6 +311,8 @@ export default function ManagerDashboard() {
       }
     } catch(err) {
       console.error("Error creating user:", err);
+    } finally {
+      setIsSubmittingUser(false);
     }
   };
 
@@ -893,8 +897,14 @@ export default function ManagerDashboard() {
                   <input required value={newUser.address} onChange={e => setNewUser({...newUser, address: e.target.value})} type="text" className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm text-zinc-900 dark:text-white outline-none focus:border-green-500/50" />
                 </div>
                 <div className="flex gap-4 mt-4">
-                  <button type="button" onClick={() => setIsAddUserOpen(false)} className="flex-1 py-2.5 border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-white/50 text-xs uppercase tracking-widest">Cancel</button>
-                  <button type="submit" className="flex-1 py-2.5 bg-green-500 text-white text-xs uppercase tracking-widest hover:bg-green-600">Add Farmer</button>
+                  <button type="button" onClick={() => setIsAddUserOpen(false)} disabled={isSubmittingUser} className="flex-1 py-2.5 border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-white/50 text-xs uppercase tracking-widest disabled:opacity-50">Cancel</button>
+                  <button type="submit" disabled={isSubmittingUser} className="flex-1 py-2.5 bg-green-500 text-white text-xs uppercase tracking-widest hover:bg-green-600 flex items-center justify-center gap-2 disabled:opacity-50">
+                    {isSubmittingUser ? (
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      "Add Farmer"
+                    )}
+                  </button>
                 </div>
               </form>
             </motion.div>
