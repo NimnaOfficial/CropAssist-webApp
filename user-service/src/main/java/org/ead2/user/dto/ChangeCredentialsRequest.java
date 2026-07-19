@@ -1,14 +1,4 @@
 package org.ead2.user.dto;
-
-/**
- * ChangeCredentialsRequest is a simple container (DTO) that holds the data
- * sent by the frontend when a farmer wants to change their temporary username and password.
- *
- * It carries:
- * - id: which user is changing their credentials
- * - newUsername: the username the farmer wants to use from now on
- * - newPassword: the new password the farmer chose
- */
 public class ChangeCredentialsRequest {
 
     /** The ID of the user who is changing their credentials */
