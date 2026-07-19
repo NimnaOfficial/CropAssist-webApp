@@ -7,6 +7,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service for handling email dispatch logic.
+ */
 @Service
 public class MailService {
 
@@ -17,6 +20,11 @@ public class MailService {
         this.mailSender = mailSender;
     }
 
+    /**
+     * Sends an email containing temporary credentials to the specified user.
+     *
+     * @param request the request containing recipient details and temporary credentials
+     */
     public void sendTemporaryCredentials(MailRequest request) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(request.getToEmail());

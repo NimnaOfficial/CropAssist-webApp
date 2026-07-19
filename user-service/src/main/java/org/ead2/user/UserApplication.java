@@ -1,9 +1,10 @@
 package org.ead2.user;
 import org.springframework.boot.SpringApplication;
-
-// @SpringBootApplication: This is a shortcut annotation (see below for details).
-//   Importing it lets us use the @SpringBootApplication label on our class.
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/**
+ * Main entry point for the User Service application.
+ */
 @SpringBootApplication
 public class UserApplication {
     public static void main(String[] args) {

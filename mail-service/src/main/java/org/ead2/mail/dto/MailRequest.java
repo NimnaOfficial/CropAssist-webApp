@@ -1,5 +1,8 @@
 package org.ead2.mail.dto;
 
+/**
+ * Data Transfer Object representing an email request for temporary credentials.
+ */
 public class MailRequest {
     private String toEmail;
     private String fullName;
