@@ -85,180 +85,28 @@ import java.util.List;
 
 
 public class CropController {
-
-    // --- FIELDS (Class-level variables) ---
-
-    // cropService: This holds a reference to the CropService object.
-    // The controller uses this to call business logic methods (like saving or fetching crops).
-    // "private" means only this class can access it.
-    // "final" means once it's set (in the constructor), it can NEVER be changed — this ensures safety.
-    // WHY: The controller should never do database work directly. It delegates to the service layer.
     private final CropService cropService;
-
-    /**
-     * CONSTRUCTOR — This is called automatically by Spring when creating the CropController.
-     *
-     * HOW IT WORKS:
-     *   Spring uses "Constructor Injection" (a form of Dependency Injection) here.
-     *   Instead of us manually creating a CropService object (like: new CropService(...)),
-     *   Spring automatically finds the CropService bean it already created and passes it in.
-     *
-     * WHY IT EXISTS:
-     *   This is how Spring "wires" components together. The controller NEEDS the service
-     *   to do its job, so Spring provides it automatically. This makes the code easier to
-     *   test and more flexible (you can swap out implementations without changing this class).
-     *
-     * @param cropService — The CropService instance, automatically provided by Spring.
-     */
     public CropController(CropService cropService) {
-
-        // "this.cropService" refers to the class field above.
-        // "cropService" (without "this") refers to the parameter passed into this constructor.
-        // This line saves the Spring-provided service so we can use it in all our methods.
         this.cropService = cropService;
     }
-
-    /**
-     * CREATE A NEW CROP
-     *
-     * HTTP Method: POST
-     * URL: /api/crops
-     * Request Body: A JSON object representing the new crop to create.
-     *
-     * WHAT IT DOES:
-     *   Takes the crop data sent by the client (in JSON format), passes it to the
-     *   CropService to save it in the database, and returns the saved crop (now with
-     *   a generated ID and any default values set).
-     *
-     * EXAMPLE REQUEST:
-     *   POST /api/crops
-     *   Body: { "name": "Rice", "farmerId": 1, "fieldLocation": "Field A", "status": "SEEDLING" }
-     *
-     * EXAMPLE RESPONSE:
-     *   { "id": 1, "name": "Rice", "farmerId": 1, ... }
-     *
-     * @param crop — The Crop object built from the JSON request body.
-     * @return The saved Crop object (with auto-generated ID and defaults filled in).
-     */
-    // @PostMapping(path = "/crops") — Maps HTTP POST requests to the URL "/api/crops" to this method.
-    // POST is the standard HTTP method used for CREATING new resources.
     @PostMapping(path = "/crops")
-    // @RequestBody — Tells Spring: "Take the JSON data from the request body and convert it
-    // into a Crop Java object automatically." Spring uses Jackson (a JSON library) to do this.
     public Crop createCrop(@RequestBody Crop crop) {
-
-        // Delegate the creation work to the service layer and return the saved crop.
         return cropService.createCrop(crop);
     }
-
-    /**
-     * GET ALL CROPS
-     *
-     * HTTP Method: GET
-     * URL: /api/crops
-     *
-     * WHAT IT DOES:
-     *   Fetches every crop record from the database and returns them as a JSON array.
-     *   No request body is needed — just call this URL.
-     *
-     * EXAMPLE REQUEST:
-     *   GET /api/crops
-     *
-     * EXAMPLE RESPONSE:
-     *   [ { "id": 1, "name": "Rice", ... }, { "id": 2, "name": "Wheat", ... } ]
-     *
-     * @return A list of all Crop objects in the database.
-     */
-    // @GetMapping(path = "/crops") — Maps HTTP GET requests to "/api/crops" to this method.
-    // GET is the standard HTTP method used for READING/FETCHING data without modifying it.
     @GetMapping(path = "/crops")
     public List<Crop> getAllCrops(){
-        // Delegate to the service layer to fetch all crops from the database.
         return cropService.getAllCrops();
     }
-
-    /**
-     * UPDATE AN EXISTING CROP
-     *
-     * HTTP Method: PUT
-     * URL: /api/crops
-     * Request Body: A JSON object with the updated crop data (must include the crop's ID).
-     *
-     * WHAT IT DOES:
-     *   Takes the updated crop data, passes it to the service layer, which saves the
-     *   changes to the database. The crop is identified by its "id" field in the JSON body.
-     *
-     * EXAMPLE REQUEST:
-     *   PUT /api/crops
-     *   Body: { "id": 1, "name": "Brown Rice", "farmerId": 1, ... }
-     *
-     * @param crop — The Crop object with updated values, built from the JSON request body.
-     * @return The updated Crop object after saving.
-     */
-    // @PutMapping(path = "/crops") — Maps HTTP PUT requests to "/api/crops" to this method.
-    // PUT is the standard HTTP method used for UPDATING an existing resource.
     @PutMapping(path = "/crops")
-    // @RequestBody — Converts the incoming JSON body into a Crop Java object.
     public Crop updateCrop(@RequestBody Crop crop) {
-        // Delegate the update work to the service layer.
         return cropService.updateCrop(crop);
     }
-
-    /**
-     * DELETE A CROP BY ID
-     *
-     * HTTP Method: DELETE
-     * URL: /api/crops/{id}  — where {id} is the actual numeric ID of the crop to delete.
-     *
-     * WHAT IT DOES:
-     *   Deletes the crop with the specified ID from the database.
-     *   Returns nothing (void) because the resource no longer exists after deletion.
-     *
-     * EXAMPLE REQUEST:
-     *   DELETE /api/crops/5  → Deletes the crop with ID 5.
-     *
-     * @param id — The unique ID of the crop to delete, extracted from the URL path.
-     */
-    // @DeleteMapping(path = "/crops/{id}") — Maps HTTP DELETE requests to "/api/crops/{id}".
-    // The {id} is a PLACEHOLDER — it will be replaced with the actual crop ID in the URL.
-    // DELETE is the standard HTTP method used for REMOVING a resource.
     @DeleteMapping(path = "/crops/{id}")
-    // @PathVariable — Tells Spring: "Extract the value of {id} from the URL and put it
-    // into this 'id' parameter." For example, if the URL is /api/crops/5, then id = 5.
     public void deleteCrop(@PathVariable Long id) {
-        // Delegate the deletion to the service layer.
         cropService.deleteCrop(id);
     }
-
-    /**
-     * UPDATE ONLY THE STATUS OF A SPECIFIC CROP
-     *
-     * HTTP Method: PUT
-     * URL: /api/crops/{id}/status?status=GROWING
-     *   — {id} is the crop's ID in the URL path.
-     *   — status is passed as a query parameter (after the "?").
-     *
-     * WHAT IT DOES:
-     *   Finds the crop with the given ID, changes ONLY its status field (e.g., from
-     *   SEEDLING to GROWING), saves it, and returns the updated crop.
-     *   This is useful when you want to update just the status without sending the entire crop object.
-     *
-     * EXAMPLE REQUEST:
-     *   PUT /api/crops/3/status?status=MATURE
-     *   → Changes crop #3's status to MATURE.
-     *
-     * @param id     — The unique ID of the crop, extracted from the URL path.
-     * @param status — The new status value, extracted from the query parameter "?status=...".
-     * @return The updated Crop object with the new status.
-     */
-    // @PutMapping(path = "/crops/{id}/status") — Maps PUT requests to this specific URL pattern.
-    // This is a more targeted endpoint — it only updates the status, not the whole crop.
     @PutMapping(path = "/crops/{id}/status")
-    // @PathVariable — Extracts {id} from the URL (e.g., /crops/3/status → id = 3).
-    // @RequestParam — Extracts the "status" value from the query string (e.g., ?status=GROWING).
-    // Spring automatically converts the string "GROWING" into the Crop.Status enum value.
     public Crop updateCropStatus(@PathVariable Long id, @RequestParam Crop.Status status) {
-        // Delegate to the service layer to find the crop, update its status, and save it.
         return cropService.updateCropStatus(id, status);
     }
 }
