@@ -147,7 +147,7 @@ CropAssist is proudly built and maintained by the following engineers:
     <b>🌍 OPEN SOURCE SOFTWARE 🌍</b><br/>
     This software is open source and available under the <b>MIT License</b>. <br/>
     You are free to copy, modify, distribute, and use this project for personal or commercial purposes. We believe in the power of open-source collaboration!<br/> 
-    Please refer to the <code>LICENSE</code> file in the root directory for the full terms.
+    Please refer to the <code><a href="https://github.com/NimnaOfficial/CropAssist-webApp/blob/main/LICENSE">LICENSE</a></code> file in the root directory for the full terms.
   </blockquote>
 </div>
 
